@@ -17,3 +17,7 @@ zum Installieren dieser Pakete müsst ihr folgendes machen:
 1. (Im RLSApp Verzeichnis) virtuelle Umgebung erstellen mit Befehl "py -3 -m venv .venv"
 2. virutelle Umgebung aktivieren mit Befehl ".venv\scripts\activate"
 3. requirements installieren mit "pip install -r requirements.txt"
+
+
+Flutter App hinzugefügt.
+Die App hat eine Hompage auf der man über Buttons zu drei anderen Pages gelangen kann.
