@@ -21,3 +21,30 @@ zum Installieren dieser Pakete müsst ihr folgendes machen:
 
 Flutter App hinzugefügt.
 Die App hat eine Hompage auf der man über Buttons zu drei anderen Pages gelangen kann.
+
+
+
+
+Änderungen 20.11.25, von Sarah:
+
+In flutterapp/lib einen neuen Ordner "screens" erstellt
+Dort folgende screens angelegt:
+- Login
+- Home
+- Fragebogen
+- Tagebuch
+- Sensor
+- Info
+- Auswertung
+- Einstellungen
+
+Das Login Screen enthält 2 Textfelder. Die Eingaben in beiden Feldern werden mithilfe von TextEditingControllern in den Variablen "username" und "password" gespeichert.
+(die kann man dann später verwenden wenn man eine richtige Login-Funktion implementiert)
+
+Home Screen enthält 6 Elevatedbuttons mit Icons.
+
+Alle anderen Screens zeigen nur eine Zeile Text.
+
+
+Aus main.dart wurde aller Code für Screens entfernt;
+dort wird nun nur noch die App erstellt und das Login Screen als default route eingestellt.
