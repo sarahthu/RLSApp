@@ -48,3 +48,10 @@ Alle anderen Screens zeigen nur eine Zeile Text.
 
 Aus main.dart wurde aller Code für Screens entfernt;
 dort wird nun nur noch die App erstellt und das Login Screen als default route eingestellt.
+
+
+
+
+Änderungen 01.12.25, von Sarah:
+
+Ordner "mockup_patient" und "mockup_arzt" erstellt + darin den Code für die von Leila erstellten Mockup Apps abgelegt
