@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/home_screen.dart';
+import 'package:flutterapp/screens/navbar_layout.dart';
 
 class LoginScreen extends StatefulWidget {
   final String title = "Login Screen";
@@ -73,7 +74,7 @@ class _LoginPageState extends State<LoginScreen> {
       //Navigator.pushReplacement verhindert dass man auf die Login Seite zurückgehen kann 
       //(im Gegensatz zu Navigator.push was im Homescreen verwendet wird und oben rechts immer den Zurückknopf hinmacht)
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                  return HomeScreen();
+                  return NavbarLayout();
                 }));
   }
 

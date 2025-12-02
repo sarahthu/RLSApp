@@ -24,7 +24,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,   //Buttons werden mittig in der Column angezeigt
           children: [
             ElevatedButton.icon(    //Knopf zur Fragebogen Seite
-              icon: Icon(Icons.question_mark),
+              icon: Icon(Icons.edit_note),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf FragebogenScreen, mit Zurückknopf
                   return FragebogenScreen();
@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(   //Knopf zur Tagebuch Seite
-              icon: Icon(Icons.mode_edit),
+              icon: Icon(Icons.menu_book_sharp),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf TagebuchScreen, mit Zurückknopf
                   return TagebuchScreen();
@@ -44,7 +44,7 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(    //Knopf zur Sensor Seite
-              icon: Icon(Icons.data_exploration_outlined),   
+              icon: Icon(Icons.query_stats),   
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {   //Weiterleiten auf SensorScreen, mit Zurückknopf
                   return SensorScreen();
@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(    //Knopf zur Infos Seite
-              icon: Icon(Icons.info_outline),   
+              icon: Icon(Icons.chat),   
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {   //Weiterleiten auf InfosScreen, mit Zurückknopf
                   return FAQScreen();
@@ -74,23 +74,13 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(    //Knopf zur Auswertungs Seite
-              icon: Icon(Icons.query_stats),   
+              icon: Icon(Icons.bar_chart),   
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
                   return AuswertungScreen();
                 }));
               },
               label: const Text('Auswertungen', style: TextStyle(fontSize: 25),),
-            ),
-            SizedBox(height: 10,),   //Abstand zwischen Knöpfen
-            ElevatedButton.icon(    //Knopf zu den Einstellungen
-              icon: Icon(Icons.settings),   
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf EinstellungenScreen, mit Zurückknopf
-                  return EinstellungenScreen();
-                }));
-              },
-              label: const Text('Einstellungen', style: TextStyle(fontSize: 25),),
             ),
           ],
         ),

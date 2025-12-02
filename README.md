@@ -61,3 +61,12 @@ Ordner "mockup_patient" und "mockup_arzt" erstellt + darin den Code für die von
 Änderungen 02.12.25, von Sarah:
 Zusätzlich zum "Info"-Screen ein Screen für häufig gestellte Fragen hinzugefügt:
 Datei faq_screen.dart mit "FAQScreen" angelegt + Button auf der Homeseite mit dem man auf das Screen kommt
+
+
+Änderungen 03.12.25, von Sarah:
+Navigationbar eingefügt, mit tabs "Home", "Kalender" und "Einstellungen".
+Dafür neue Datei "navbar_layout" angelegt, die die Logik zum Wechseln der Tabs enthält.
+
+Knopf "Einstellungen" vom Home Screen entfernt (zu den Einstellungen kommt man ja jetzt über die Navigatiobar)
+
+Icons abgeändert, sodass sie besser zu denen in Leilas Mockup testen 

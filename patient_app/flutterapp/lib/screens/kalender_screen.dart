@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class FAQScreen extends StatelessWidget {
-  final String title = "Häufig gestellte Fragen";
+class KalenderScreen extends StatelessWidget {
+  final String title = "Kalender";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -10,7 +10,7 @@ class FAQScreen extends StatelessWidget {
         title: Text(title),
       ),
       body: Center(
-        child: Text("Screen für Häufig gestellte Fragen", style: TextStyle(fontSize: 20),)
+        child: Text("Screen für den Kalender", style: TextStyle(fontSize: 20),)
       ),
     );
   }
