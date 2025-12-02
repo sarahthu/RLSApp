@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class InfosScreen extends StatelessWidget {
+class FAQScreen extends StatelessWidget {
   final String title = "RLS Infos";
   @override
   Widget build(BuildContext context) {
@@ -10,7 +10,7 @@ class InfosScreen extends StatelessWidget {
         title: Text(title),
       ),
       body: Center(
-        child: Text("Screen für RLS Infomaterial und Links", style: TextStyle(fontSize: 20),)
+        child: Text("Screen für Häufig gestellte Fragen", style: TextStyle(fontSize: 20),)
       ),
     );
   }

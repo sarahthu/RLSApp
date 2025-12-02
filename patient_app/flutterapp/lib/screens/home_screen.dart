@@ -5,6 +5,7 @@ import 'package:flutterapp/screens/fragebogen_screen.dart';
 import 'package:flutterapp/screens/infos_screen.dart';
 import 'package:flutterapp/screens/sensor_screen.dart';
 import 'package:flutterapp/screens/tagebuch_screen.dart';
+import 'package:flutterapp/screens/faq_screen.dart';
 
 //--------------------- Homepage --------------------------------------------------
 
@@ -60,6 +61,16 @@ class HomeScreen extends StatelessWidget {
                 }));
               },
               label: const Text('Infos', style: TextStyle(fontSize: 25),),
+            ),
+            SizedBox(height: 10,),   //Abstand zwischen Knöpfen
+            ElevatedButton.icon(    //Knopf zur Infos Seite
+              icon: Icon(Icons.info_outline),   
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {   //Weiterleiten auf InfosScreen, mit Zurückknopf
+                  return FAQScreen();
+                }));
+              },
+              label: const Text('Häufig gestellte Fragen', style: TextStyle(fontSize: 25),),
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(    //Knopf zur Auswertungs Seite

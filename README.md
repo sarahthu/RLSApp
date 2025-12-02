@@ -55,3 +55,9 @@ dort wird nun nur noch die App erstellt und das Login Screen als default route e
 Änderungen 01.12.25, von Sarah:
 
 Ordner "mockup_patient" und "mockup_arzt" erstellt + darin den Code für die von Leila erstellten Mockup Apps abgelegt
+
+
+
+Änderungen 02.12.25, von Sarah:
+Zusätzlich zum "Info"-Screen ein Screen für häufig gestellte Fragen hinzugefügt:
+Datei faq_screen.dart mit "FAQScreen" angelegt + Button auf der Homeseite mit dem man auf das Screen kommt
