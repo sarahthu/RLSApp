@@ -6,6 +6,7 @@ import 'package:flutterapp/screens/sensor_screen.dart';
 import 'package:flutterapp/screens/tagebuch_screen.dart';
 import 'package:flutterapp/screens/faq_screen.dart';
 
+
 //--------------------- Homepage --------------------------------------------------
 
 class HomeScreen extends StatelessWidget {
