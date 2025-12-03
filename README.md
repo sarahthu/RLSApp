@@ -70,3 +70,9 @@ Dafür neue Datei "navbar_layout" angelegt, die die Logik zum Wechseln der Tabs 
 Knopf "Einstellungen" vom Home Screen entfernt (zu den Einstellungen kommt man ja jetzt über die Navigatiobar)
 
 Icons abgeändert, sodass sie besser zu denen in Leilas Mockup testen 
+
+
+Änderungen 03.12.25, von Sarah:
+Package "table_calendar: ^3.2.0" zu pubspec.yaml hinzugefügt.
+Kalender in kalender_screen eingefügt.
+Wenn ein Tag ausgwählt wird wird der Benutzer auf das Screen "KalenderAuswahlScreen" weitergeleitet.

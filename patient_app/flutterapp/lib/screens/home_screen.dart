@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auswertung_screen.dart';
-import 'package:flutterapp/screens/einstellungen_screen.dart';
 import 'package:flutterapp/screens/fragebogen_screen.dart';
 import 'package:flutterapp/screens/infos_screen.dart';
 import 'package:flutterapp/screens/sensor_screen.dart';
