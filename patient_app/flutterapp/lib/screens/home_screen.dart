@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auswertung_screen.dart';
+import 'package:flutterapp/screens/erinnerungen_screen.dart';
 import 'package:flutterapp/screens/fragebogen_screen.dart';
 import 'package:flutterapp/screens/infos_screen.dart';
 import 'package:flutterapp/screens/sensor_screen.dart';
@@ -30,7 +31,7 @@ class HomeScreen extends StatelessWidget {
                   return FragebogenScreen();
                 }));
               },
-              label: const Text('Fragebogen', style: TextStyle(fontSize: 25),),
+              label: const Text('Fragebögen', style: TextStyle(fontSize: 25),),
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(   //Knopf zur Tagebuch Seite
@@ -41,6 +42,16 @@ class HomeScreen extends StatelessWidget {
                 }));
               },
               label: const Text('Tagebuch', style: TextStyle(fontSize: 25),),
+            ),
+            SizedBox(height:10,),
+            ElevatedButton.icon(   //Knopf zur Erinnerungen Seite
+              icon: Icon(Icons.notification_add),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf ErinnerungenScreen, mit Zurückknopf
+                  return ErinnerungenScreen();
+                }));
+              },
+              label: const Text('Erinnerungen', style: TextStyle(fontSize: 25),),
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(    //Knopf zur Sensor Seite
@@ -63,10 +74,10 @@ class HomeScreen extends StatelessWidget {
               label: const Text('Infos', style: TextStyle(fontSize: 25),),
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
-            ElevatedButton.icon(    //Knopf zur Infos Seite
+            ElevatedButton.icon(    //Knopf zur FAQ Seite
               icon: Icon(Icons.chat),   
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {   //Weiterleiten auf InfosScreen, mit Zurückknopf
+                Navigator.push(context, MaterialPageRoute(builder: (context) {   //Weiterleiten auf FAQScreen, mit Zurückknopf
                   return FAQScreen();
                 }));
               },
