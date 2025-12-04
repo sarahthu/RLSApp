@@ -21,3 +21,58 @@ zum Installieren dieser Pakete müsst ihr folgendes machen:
 
 Flutter App hinzugefügt.
 Die App hat eine Hompage auf der man über Buttons zu drei anderen Pages gelangen kann.
+
+
+
+
+Änderungen 20.11.25, von Sarah:
+
+In flutterapp/lib einen neuen Ordner "screens" erstellt
+Dort folgende screens angelegt:
+- Login
+- Home
+- Fragebogen
+- Tagebuch
+- Sensor
+- Info
+- Auswertung
+- Einstellungen
+
+Das Login Screen enthält 2 Textfelder. Die Eingaben in beiden Feldern werden mithilfe von TextEditingControllern in den Variablen "username" und "password" gespeichert.
+(die kann man dann später verwenden wenn man eine richtige Login-Funktion implementiert)
+
+Home Screen enthält 6 Elevatedbuttons mit Icons.
+
+Alle anderen Screens zeigen nur eine Zeile Text.
+
+
+Aus main.dart wurde aller Code für Screens entfernt;
+dort wird nun nur noch die App erstellt und das Login Screen als default route eingestellt.
+
+
+
+
+Änderungen 01.12.25, von Sarah:
+
+Ordner "mockup_patient" und "mockup_arzt" erstellt + darin den Code für die von Leila erstellten Mockup Apps abgelegt
+
+
+
+Änderungen 02.12.25, von Sarah:
+Zusätzlich zum "Info"-Screen ein Screen für häufig gestellte Fragen hinzugefügt:
+Datei faq_screen.dart mit "FAQScreen" angelegt + Button auf der Homeseite mit dem man auf das Screen kommt
+
+
+Änderungen 03.12.25, von Sarah:
+Navigationbar eingefügt, mit tabs "Home", "Kalender" und "Einstellungen".
+Dafür neue Datei "navbar_layout" angelegt, die die Logik zum Wechseln der Tabs enthält.
+
+Knopf "Einstellungen" vom Home Screen entfernt (zu den Einstellungen kommt man ja jetzt über die Navigatiobar)
+
+Icons abgeändert, sodass sie besser zu denen in Leilas Mockup testen 
+
+
+Änderungen 03.12.25, von Sarah:
+Package "table_calendar: ^3.2.0" zu pubspec.yaml hinzugefügt.
+Kalender in kalender_screen eingefügt.
+Wenn ein Tag ausgwählt wird wird der Benutzer auf das Screen "KalenderAuswahlScreen" weitergeleitet.
