@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+//Screen für die Fragebogenübersicht
 class FragebogenScreen extends StatelessWidget {
   final String title = "Fragebogen";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        //Farbe
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(title),
       ),
@@ -19,6 +21,7 @@ class FragebogenScreen extends StatelessWidget {
   }
 }
 
+//Stateful Widget: RLS Fragebogen
 
 class RlsQuestionnairePage extends StatefulWidget {
   const RlsQuestionnairePage({super.key});
@@ -28,15 +31,17 @@ class RlsQuestionnairePage extends StatefulWidget {
 }
 
 class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
+  //geladene Questionnaire als Map
   Map<String, dynamic>? questionnaire;
+  // Speichert Antworten pro Frage
   final Map<String, String> answers = {};
-  bool loading = true;
-  String? error;
+  bool loading = true; //True solange Daten geladen werden
+  String? error; //Fehlertext, falls etwas schiefgeht
 
   @override
   void initState() {
     super.initState();
-    loadQuestionnaire();
+    loadQuestionnaire(); //Beim Start Fragebogen laden
   }
 
   //Fragebogen vom Django Server laden
@@ -47,6 +52,7 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
       final resp = await http.get(url);
 
       if (resp.statusCode == 200) {
+        //JSON erfolgreich erhalten → speichern
         setState(() {
           questionnaire = jsonDecode(resp.body);
           loading = false;
@@ -69,31 +75,33 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
   Future<void> sendResponse() async {
     if (questionnaire == null) return;
 
+// 🌿 Antworten im Backend-kompatiblen Format aufbauen
     final items = answers.entries.map((entry) {
       return {
-        "linkId": entry.key,
+        "linkId": entry.key, //ID der Frage
         "answer": [
-          {"valueString": entry.value}
+          {"valueString": entry.value} //Gewählte Antwort
         ]
       };
     }).toList();
 
     final body = {
-      "resourceType": "QuestionnaireResponse",
-      "questionnaire": questionnaire!["id"],
+      "resourceType": "QuestionnaireResponse", //FHIR-Format
+      "questionnaire": questionnaire!["id"],  // ID des Fragebogens
       "status": "completed",
       "item": items,
     };
 
     final url = Uri.parse('http://127.0.0.1:8000/api/rls/response/');
+    // POST Request mit JSON Body
     final resp = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body),
+      body: jsonEncode(body), //JSON senden
     );
 
     debugPrint("Antwort vom Server:");
-    debugPrint(resp.body);
+    debugPrint(resp.body);//Ausgabe in der Debug-Konsole
   }
 
   @override
@@ -109,7 +117,7 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
         body: Center(child: Text(error!)),
       );
     }
-
+// Fragen aus dem Fragebogen holen
     final items = questionnaire?["item"] as List<dynamic>? ?? [];
 
     return Scaffold(
@@ -117,9 +125,11 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          //Jede Frage anzeigen
           for (final item in items)
             _buildQuestionItem(item),
           const SizedBox(height: 20),
+          // Button zum Absenden der Antworten
           ElevatedButton(
             onPressed: sendResponse,
             child: const Text("Antwort senden"),
@@ -129,6 +139,7 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
     );
   }
 
+//Baut passende Eingabefeld
   Widget _buildQuestionItem(Map<String, dynamic> item) {
     final linkId = item["linkId"];
     final text = item["text"];
@@ -142,7 +153,9 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(text, style: const TextStyle(fontWeight: FontWeight.bold)), //Frage anzeigen
+
+//Für jede Option einen Button erstellen
           for (final opt in options)
             RadioListTile<String>(
               title: Text(opt),
@@ -159,14 +172,14 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
       );
     }
 
-    // text answer
+    //Text antwort
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
         TextField(
           onChanged: (val) {
-            answers[linkId] = val;
+            answers[linkId] = val; //Textantwort speichern
           },
         ),
         const SizedBox(height: 12),
