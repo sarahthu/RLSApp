@@ -76,3 +76,7 @@ Icons abgeändert, sodass sie besser zu denen in Leilas Mockup testen
 Package "table_calendar: ^3.2.0" zu pubspec.yaml hinzugefügt.
 Kalender in kalender_screen eingefügt.
 Wenn ein Tag ausgwählt wird wird der Benutzer auf das Screen "KalenderAuswahlScreen" weitergeleitet.
+
+
+Änderungen 06.12.25, von Sarah:
+Neues Verzeichnis "fragebogen_definition" angelegt, in dem Codes für das Einspeichern der Fragebögen auf dem FHIR Server abgelegt sind.
