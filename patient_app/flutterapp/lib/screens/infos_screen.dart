@@ -14,6 +14,7 @@ Future<void> openRlsWebsite() async {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Informationen'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

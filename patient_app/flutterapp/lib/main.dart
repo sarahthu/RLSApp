@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {  //Der Code in MyApp richtet die gesamte A
         debugShowCheckedModeBanner: false, //macht das debug Banner oben rechts weg
         title: 'Patient App',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         ),
         home: LoginScreen(),
     );
