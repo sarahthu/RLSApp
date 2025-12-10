@@ -12,52 +12,132 @@ json_obj = {
   "item" : [{
     "linkId" : "1",
     "text" : "Wie würden Sie die Beschwerden in Ihren Beinen oder Armen insgesamt bewerten?",
-    "type" : "integer"
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Keine Beschwerden"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
   {
     "linkId" : "2",
     "text" : "Wie stark ist Ihr Bewegungsdrang aufgrund der RLS-Beschwerden?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Kein Bewegungsdrang"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
   {
     "linkId" : "3",
     "text" : "Wie stark werden Ihre RLS-Beschwerden durch Bewegung gelindert?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
     {
     "linkId" : "4",
     "text" : "Wie stark beeinträchtigen die RLS-Beschwerden Ihren Schlaf?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
   {
     "linkId" : "5",
     "text" : "Wie müde oder schläfrig sind Sie tagsüber aufgrund der RLS-Beschwerden?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
   {
     "linkId" : "6",
     "text" : "Wie stark ausgeprägt sind Ihre RLS-Beschwerden insgesamt?",
-    "type" : "integer"
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
   {
     "linkId" : "7",
     "text" : "Wie oft treten Ihre RLS-Beschwerden auf?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Nie"},
+                {"valueString": "Selten"},
+                {"valueString": "Mittel-oft"},
+                {"valueString": "Oft"},
+                {"valueString": "Sehr oft"}
+    ]
   },
   {
     "linkId" : "8",
     "text" : "Wenn Sie RLS-Beschwerden haben, wie stark sind diese im Durchschnitt?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Sehr schwach"},
+                {"valueString": "Schwach"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
     {
     "linkId" : "9",
     "text" : "Wie stark beeinträchtigen die RLS-Beschwerden Ihre Fähigkeit, tägliche Aufgaben zu erledigen?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
     {
     "linkId" : "10",
     "text" : "Wie stark beeinträchtigen die RLS-Beschwerden Ihre Stimmung?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   }
   ]
 }
@@ -73,12 +153,16 @@ server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
 quest_object = quest.model_dump() 
 
 #Verwendung von PUT um den Fragebogen genau an seine ID zu kriegen: https://stackoverflow.com/questions/107390/whats-the-difference-between-a-post-and-a-put-http-request
-response = requests.put(server_url + "/Questionnaire/" + json_obj["id"], json=quest_object)
+response = requests.put(
+    server_url + "/Questionnaire/" + json_obj["id"], 
+    json=quest_object,
+    verify=False  #deaktiviert Zertifikat-Verifikation -> funktioniert für Self Signed Zertifikate
+  )
 
 print("Status:" + str(response.status_code))
 print(response.content)
 
-response = requests.get(server_url + "/Questionnaire/" + "f1")
+response = requests.get(server_url + "/Questionnaire/" + "f1", verify=False)
 
 print("Status: " + str(response.status_code))
 print(response.content)

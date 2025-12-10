@@ -12,27 +12,67 @@ json_obj = {
   "item" : [{
     "linkId" : "1",
     "text" : "Wie sehr fühlen Sie sich durch Ihr RLS belastet?",
-    "type" : "integer"
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Leicht"},
+                {"valueString": "Mittel"},
+                {"valueString": "Stark"},
+                {"valueString": "Sehr stark"}
+    ]
   },
   {
     "linkId" : "2",
     "text" : "Wie oft in den letzten 4 Wochen hat Sie Ihr RLS von abendlichen sozialen Aktivitäten abgehalten?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Selten"},
+                {"valueString": "Mittel-oft"},
+                {"valueString": "Oft"},
+                {"valueString": "Sehr oft"}
+    ]
   },
   {
     "linkId" : "3",
     "text" : "Wie oft in den letzten 4 Wochen wurde Ihre Fähigkeit gute Entscheidungen zu treffen durch Schlafprobleme beeinträchtigt?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Selten"},
+                {"valueString": "Mittel-oft"},
+                {"valueString": "Oft"},
+                {"valueString": "Sehr oft"}
+    ]
   },
     {
     "linkId" : "4",
     "text" : "Wie oft in den letzten 4 Wochen hat Ihr RLS Sie bei der Ausführung von täglichen Aktivitäten behindert, beispielsweise dabei ein zufriedenstellendes Familien-, Haushalts-, Sozial-, Schul- oder Berufsleben zu führen?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Selten"},
+                {"valueString": "Mittel-oft"},
+                {"valueString": "Oft"},
+                {"valueString": "Sehr oft"}
+    ]
   },
     {
     "linkId" : "5",
     "text" : "Wie oft in den letzen 4 Wochen hatten Sie wegen Ihrem RLS Schwierigkeiten einen vollen Tag zu arbeiten?",
-    "type" : "integer",
+    "type": "choice",
+    "required": True,
+    "answerOption": [
+                {"valueString": "Gar nicht"},
+                {"valueString": "Selten"},
+                {"valueString": "Mittel-oft"},
+                {"valueString": "Oft"},
+                {"valueString": "Sehr oft"}
+    ]
   }
   ]
 }
@@ -48,12 +88,16 @@ server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
 quest_object = quest.model_dump() 
 
 #Verwendung von PUT um den Fragebogen genau an seine ID zu kriegen: https://stackoverflow.com/questions/107390/whats-the-difference-between-a-post-and-a-put-http-request
-response = requests.put(server_url + "/Questionnaire/" + json_obj["id"], json=quest_object)
+response = requests.put(
+    server_url + "/Questionnaire/" + json_obj["id"], 
+    json=quest_object,
+    verify=False  #deaktiviert Zertifikat-Verifikation -> funktioniert für Self Signed Zertifikate
+  )
 
 print("Status:" + str(response.status_code))
 print(response.content)
 
-response = requests.get(server_url + "/Questionnaire/" + "f2")
+response = requests.get(server_url + "/Questionnaire/" + "f2", verify=False)
 
 print("Status: " + str(response.status_code))
 print(response.content)

@@ -80,3 +80,16 @@ Wenn ein Tag ausgwählt wird wird der Benutzer auf das Screen "KalenderAuswahlSc
 
 Änderungen 06.12.25, von Sarah:
 Neues Verzeichnis "fragebogen_definition" angelegt, in dem Codes für das Einspeichern der Fragebögen auf dem FHIR Server abgelegt sind.
+
+
+Änderungen 10.12.25, von Sarah:
+Schnittstelle mit unserem Firely Server hinzugefügt -> Fragebögen werden vom Server geholt, Antworten werden im Server abgespeichert
+
+In views.py zu Django API Views Decorator hinzugefügt. Nicht verwendete Codeabschnitte auskommentiert. API views umbenannt in get_questionnaire und post_response. Bei allen http requests verify=False gesetzt (da wir ein selbst signiertes SSL Zertifikat verwenden und Django das sonst nicht akzeptiert)
+
+In urls.py bei Django questionnaire API einen Path Converter "id" hinzugefügt, sodass man über die gleiche API verschiedene Fragebögen abrufen kann (je nachdem welche id man dazuschreibt) 
+
+FragebogenScreen der flutterapp so abgeändert dass es auf 2 Seiten weiterleitet, IRLSSScreen (das den IRLSS Fragebogen anzeigt) und RLSQOLScreen (das den RLS Quality of Life Fragebogen anzeigt)
+
+Bei IRLSSScreen und RLSQOLScreen beim "Antwort Senden" Knopf Navigator.pop hinzugefügt -> bringt Benutzer nach Absenden des Fragebogens auf das FragebogenScreen zurück.
+Format der an Django gesendeten Antworten so abgeändert, dass sie als QuestionnaireResponse Ressource gespeichert werden können
