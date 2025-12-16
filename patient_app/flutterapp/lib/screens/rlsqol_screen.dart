@@ -1,18 +1,19 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutterapp/screens/irlss_screen.dart';
-import 'package:flutterapp/screens/rlsqol_screen.dart';
+import 'package:http/http.dart' as http;
 
-<<<<<<< HEAD
 
-class FragebogenScreen extends StatefulWidget {
-  final String title = "Fragebogen";
-  const FragebogenScreen({super.key});
+class RLSQOLScreen extends StatefulWidget {
+  final String title = "RLS Quality of Life Fragebogen";
+  const RLSQOLScreen({super.key});
 
   @override
-  State<FragebogenScreen> createState() => _FragebogenScreenState();
+  State<RLSQOLScreen> createState() => _RLSQOLScreenState();
 }
 
-class _FragebogenScreenState extends State<FragebogenScreen> {
+class _RLSQOLScreenState extends State<RLSQOLScreen> {
+  final String id = "f2"; //ID des Fragebogens auf dem FHIR Server
+
   Map<String, dynamic>? questionnaire;
   // Speichert Antworten pro Frage
   final Map<String, String> answers = {};
@@ -22,14 +23,14 @@ class _FragebogenScreenState extends State<FragebogenScreen> {
   @override
   void initState() {
     super.initState();
-    loadQuestionnaire(); //Beim Start Fragebogen laden
+    loadQuestionnaire();  //Beim Start Fragebogen laden
   }
 
   //Fragebogen vom Django Server laden
   Future<void> loadQuestionnaire() async {
     try {
       // 10.0.2.2 ist wichtig für Android Emulator
-      final url = Uri.parse('http://127.0.0.1:8000/api/rls/questionnaire/');
+      final url = Uri.parse("http://127.0.0.1:8000/api/rls/questionnaire/$id");
       final resp = await http.get(url);
 
       if (resp.statusCode == 200) {
@@ -54,9 +55,10 @@ class _FragebogenScreenState extends State<FragebogenScreen> {
 
   //Antworten an Django senden
   Future<void> sendResponse() async {
+    final date = DateTime.now(); //Variable die Zeit speichert zu der der Fragebogen abgesendet wurde
     if (questionnaire == null) return;
 
-// 🌿 Antworten im Backend-kompatiblen Format aufbauen
+    //Antworten im Backend-kompatiblen Format aufbauen
     final items = answers.entries.map((entry) {
       return {
         "linkId": entry.key, //ID der Frage
@@ -68,8 +70,10 @@ class _FragebogenScreenState extends State<FragebogenScreen> {
 
     final body = {
       "resourceType": "QuestionnaireResponse", //FHIR-Format
-      "questionnaire": questionnaire!["id"],  // ID des Fragebogens
+      "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
+      "questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
       "status": "completed",
+      "authored" : date.toUtc().toIso8601String(),
       "item": items,
     };
 
@@ -98,22 +102,15 @@ class _FragebogenScreenState extends State<FragebogenScreen> {
         body: Center(child: Text(error!)),
       );
     }
-// Fragen aus dem Fragebogen holen
+
+    // Fragen aus dem Fragebogen holen
     final items = questionnaire?["item"] as List<dynamic>? ?? [];
 
-=======
-class FragebogenScreen extends StatelessWidget {
-  final String title = "Fragebogen auswählen:";
-
-  @override
-  Widget build(BuildContext context) {
->>>>>>> e9079a118f2d8942e4efe0a0a59707c19f8a4a85
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
+        title: Text("RLS Fragebogen"),
       ),
-<<<<<<< HEAD
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -123,7 +120,10 @@ class FragebogenScreen extends StatelessWidget {
           const SizedBox(height: 20),
           // Button zum Absenden der Antworten
           ElevatedButton(
-            onPressed: sendResponse,
+            onPressed: () {
+                sendResponse();  //sendet Antworten an Django Backend
+                Navigator.pop(context);  //navigiert zurück zum FragebogenScreen
+            },
             child: const Text("Antwort senden"),
           )
         ],
@@ -131,7 +131,7 @@ class FragebogenScreen extends StatelessWidget {
     );
   }
 
-//Baut passende Eingabefeld
+  //Baut passende Eingabefeld
   Widget _buildQuestionItem(Map<String, dynamic> item) {
     final linkId = item["linkId"];
     final text = item["text"];
@@ -145,9 +145,8 @@ class FragebogenScreen extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(text, style: const TextStyle(fontWeight: FontWeight.bold)), //Frage anzeigen
-
-//Für jede Option einen Button erstellen
+          Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+          //Für jede Option einen Button erstellen
           for (final opt in options)
             RadioListTile<String>(
               title: Text(opt),
@@ -157,51 +156,25 @@ class FragebogenScreen extends StatelessWidget {
                 setState(() {
                   answers[linkId] = value!;
                 });
-=======
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,   //Buttons werden mittig in der Column angezeigt
-          children: [
-            ElevatedButton.icon(    //Knopf zur Fragebogen Seite
-              icon: Icon(Icons.edit_note),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf FragebogenScreen, mit Zurückknopf
-                  return IRLSSScreen();
-                }));
->>>>>>> e9079a118f2d8942e4efe0a0a59707c19f8a4a85
               },
-              label: const Text('IRLSS', style: TextStyle(fontSize: 25),),
             ),
-<<<<<<< HEAD
           const SizedBox(height: 12),
         ],
       );
     }
 
-    //Text antwort
+    // text answer
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(text, style: const TextStyle(fontWeight: FontWeight.bold)), //Frage anzeigen
         TextField(
           onChanged: (val) {
-            answers[linkId] = val; //Textantwort speichern
+            answers[linkId] = val;  //Textantwort speichern
           },
-=======
-            SizedBox(height: 10,),   //Abstand zwischen Knöpfen
-            ElevatedButton.icon(   //Knopf zur Tagebuch Seite
-              icon: Icon(Icons.edit_note),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf TagebuchScreen, mit Zurückknopf
-                  return RLSQOLScreen();
-                }));
-              },
-              label: const Text('RLS QoL', style: TextStyle(fontSize: 25),),
-            ),
-          ],
->>>>>>> e9079a118f2d8942e4efe0a0a59707c19f8a4a85
         ),
-      ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 }

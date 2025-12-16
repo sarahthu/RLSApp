@@ -1,7 +1,7 @@
 from django.urls import path
-from . import views
+from .views import get_questionnaire, post_response
 
 urlpatterns = [
-    path("rls/questionnaire/", views.rls_questionnaire),
-    path("rls/response/", views.rls_response),
+    path("rls/questionnaire/<str:id>", get_questionnaire),
+    path("rls/response/", post_response),
 ]
