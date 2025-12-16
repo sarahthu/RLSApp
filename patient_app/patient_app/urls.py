@@ -24,5 +24,5 @@ urlpatterns = [
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('rls_api.urls')),
+    path('api/', include('api.urls')),
 ]

@@ -76,7 +76,10 @@ class FAQScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Häufig gestellte Fragen')),
+      appBar: AppBar(
+        title: const Text('Häufig gestellte Fragen'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
       body: ListView(
         children: faqs.map((faq) {
           return ExpansionTile(

@@ -3,35 +3,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-//Screen für die Fragebogenübersicht
-class FragebogenScreen extends StatelessWidget {
+
+class FragebogenScreen extends StatefulWidget {
   final String title = "Fragebogen";
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        //Farbe
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
-      ),
-      body: Center(
-        child: Text("Screen für die Fragebögen", style: TextStyle(fontSize: 20),)
-      ),
-    );
-  }
-}
-
-//Stateful Widget: RLS Fragebogen
-
-class RlsQuestionnairePage extends StatefulWidget {
-  const RlsQuestionnairePage({super.key});
+  const FragebogenScreen({super.key});
 
   @override
-  State<RlsQuestionnairePage> createState() => _RlsQuestionnairePageState();
+  State<FragebogenScreen> createState() => _FragebogenScreenState();
 }
 
-class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
-  //geladene Questionnaire als Map
+class _FragebogenScreenState extends State<FragebogenScreen> {
   Map<String, dynamic>? questionnaire;
   // Speichert Antworten pro Frage
   final Map<String, String> answers = {};
@@ -121,7 +102,10 @@ class _RlsQuestionnairePageState extends State<RlsQuestionnairePage> {
     final items = questionnaire?["item"] as List<dynamic>? ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("RLS Fragebogen")),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text("RLS Fragebogen"),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
