@@ -16,7 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from portal.views import startseite , home, dokumentation, einstellungen, profil
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', startseite, name='startseite'),  # Startseite: /
+    path('home/', home, name='home'),
+    path('dokumentation/', dokumentation, name='dokumentation'),
+    path('einstellungen/', einstellungen, name='einstellungen'),
+    path('profil/', profil, name='profil'),
 ]
