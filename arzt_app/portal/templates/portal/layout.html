@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #e8f0fe;
+            margin: 0; /* Kein äußeres Rand*/
+            padding: 0; /*Kein innerer Rand*/
+        }
+
+        /* NAVIGATIONSBAR */
+        .navbar {
+            background-color: #9ad87cff;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 25px;
+            font-size: 18px;
+        }
+
+        .navbar a {
+            color: black;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        /* Seiteninhalt */
+        .content {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    
+    <div class="navbar">
+        <a href="/home/">Übersicht</a>
+        <a href="/dokumentation/">Dokumentation</a>
+        <a href="/einstellungen/">Einstellungen</a>
+        <a href="/profil/">Profil</a>
+        <a href="/">Abmelden</a>
+    </div>
+
+
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</body>
+</html>
