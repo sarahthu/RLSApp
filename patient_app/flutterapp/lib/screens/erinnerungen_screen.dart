@@ -136,6 +136,15 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                           final picked = await showTimePicker(
                             context: context,
                             initialTime: selectedTime ?? now,
+                            //Stellt Sprache auf Deutsch:
+                            builder: (BuildContext context, Widget? child) => MediaQuery(
+                              data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+                              child: Localizations.override(
+                                context: context,
+                                locale: const Locale("de"),
+                                child: child!,
+                              ),
+                            ),
                           );
                           if (picked != null) {
                             setDialogState(() {
@@ -160,6 +169,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                         onTap: () async {
                           final today = DateTime.now();
                           final picked = await showDatePicker(
+                            locale: const Locale("de"),  //Setzt Sprache des Datepickers auf Deutsch
                             context: context,
                             firstDate: today,
                             lastDate: DateTime(today.year + 5),
@@ -278,7 +288,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: _reminders.isEmpty
-            ? const Center(child: Text('Noch keine Erinnerungen'))
+            ? const Center(child: Text('Noch keine Erinnerungen', style: TextStyle(fontSize: 20),))
             : ListView.separated(
                 itemCount: _reminders.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),

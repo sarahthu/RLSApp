@@ -3,22 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 
-class IRLSSScreen extends StatefulWidget {
-  final String title = "International RLS Scale";
-  const IRLSSScreen({super.key});
+class IRLSScreen extends StatefulWidget {
+  const IRLSScreen({super.key});
 
   @override
-  State<IRLSSScreen> createState() => _IRLSSScreenState();
+  State<IRLSScreen> createState() => _IRLSScreenState();
 }
 
-class _IRLSSScreenState extends State<IRLSSScreen> {
+class _IRLSScreenState extends State<IRLSScreen> {
   final String id = "f1"; //ID des Fragebogens auf dem FHIR Server
+  final String title = "International RLS Scale"; //Titel des Screens
 
-  Map<String, dynamic>? questionnaire;
-  // Speichert Antworten pro Frage
+
+  Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
   final Map<String, String> answers = {};
   bool loading = true; //True solange Daten geladen werden
   String? error; //Fehlertext, falls etwas schiefgeht
+  Map<String, dynamic>? djangoresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
+  int score = 0; //Integer für den Fragebogen Score (wird bei speichern von QuestionnaireResponse von Django übergeben)
+  int maxscore = 0; //Integer für dem maximalen Score der auf dem Fragebogen erzielt werden kann
+
 
   @override
   void initState() {
@@ -26,7 +30,7 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
     loadQuestionnaire();  //Beim Start Fragebogen laden
   }
 
-  //Fragebogen vom Django Server laden
+  //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
     try {
       // 10.0.2.2 ist wichtig für Android Emulator
@@ -38,6 +42,7 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
         setState(() {
           questionnaire = jsonDecode(resp.body);
           loading = false;
+          maxscore = questionnaire?["item"][0]["extension"][0]["valueInteger"]; //Speichet maximal erreichbaren Score in Variable Maxscore
         });
       } else {
         setState(() {
@@ -53,7 +58,7 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
     }
   }
 
-  //Antworten an Django senden
+  //------------------------------Antworten an Django senden-----------------------------------------------
   Future<void> sendResponse() async {
     final date = DateTime.now(); //Variable die Zeit speichert zu der der Fragebogen abgesendet wurde
     if (questionnaire == null) return;
@@ -68,13 +73,23 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
       };
     }).toList();
 
+    //erstellt eine JSON im FHIR QuestionnaireResponse Format, mit den eingegebenen Antworten und Score=null (wir später im Backend berechnet)
     final body = {
       "resourceType": "QuestionnaireResponse", //FHIR-Format
       "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
       "questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
       "status": "completed",
       "authored" : date.toUtc().toIso8601String(),
-      "item": items,
+      "item": [
+        {
+          "linkId": "0",
+          "valueInteger": null
+        },
+        {
+          "linkId": "1",
+          "item": items
+        }
+      ]
     };
 
     final url = Uri.parse('http://127.0.0.1:8000/api/rls/response/');
@@ -85,9 +100,47 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
       body: jsonEncode(body), //JSON senden
     );
 
+    if (resp.statusCode == 200) {
+        //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
+        djangoresponse = jsonDecode(resp.body);
+        score = djangoresponse?["score"];
+
+    }
+
     debugPrint("Antwort vom Server:");
     debugPrint(resp.body);//Ausgabe in der Debug-Konsole
   }
+
+
+
+  //-------------------Pop-Up Fenster das den Score anzeigt----------------------------------------------
+  Future<void> showMyDialog() async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // Benutzer muss den Knopf drücken um weiter zu kommen
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Antworten gespeichert!'),  //Titel des Pop-up Fensters
+        content: SingleChildScrollView(
+          child: Text('Ihr RLS-Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
+        ),
+        actionsAlignment: MainAxisAlignment.center, //"Okay" Button steht mittig vom Pop-up
+        actions: <Widget>[
+          ElevatedButton(
+            child: const Text('Okay'),
+            onPressed: () {
+              Navigator.of(context).pop();  //schließt Pop-up (navigiert zurück zum RLSQOLScreen)
+              Navigator.of(context).pop();  //navigiert zurück zum FragebogenScreen
+
+            },
+          ),
+        ],
+      );
+      },
+    );
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -104,12 +157,12 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
     }
 
     // Fragen aus dem Fragebogen holen
-    final items = questionnaire?["item"] as List<dynamic>? ?? [];
+    final items = (questionnaire?['item'] as List?)?[1]?['item'] as List? ?? [];
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("RLS Fragebogen"),
+        title: Text(title),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -120,11 +173,11 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
           const SizedBox(height: 20),
           // Button zum Absenden der Antworten
           ElevatedButton(
-            onPressed: () {
-                sendResponse();  //sendet Antworten zum Django Backend
-                Navigator.pop(context);  //navigiert zurück zum FragebogenScreen
+            onPressed: () async {
+                await sendResponse();  //Button wartet bis sendResponse (Funktion die Antworten zum Django Backend sendet) abgeschlossen ist
+                showMyDialog(); //wenn sendResponse fertig ist (=wenn Score unter int score gespeichert ist), wird Pop Up angezeigt 
             },
-            child: const Text("Antwort senden"),
+            child: const Text("Antworten senden"),
           )
         ],
       ),
@@ -149,7 +202,7 @@ class _IRLSSScreenState extends State<IRLSSScreen> {
           //Für jede Option einen Button erstellen
           for (final opt in options)
             RadioListTile<String>(
-              title: Text(opt),
+              title: Text(opt.substring(1)),  //Zeigt die erste Stelle der AntwortOptionen (=den Score-Wert) nicht mit an
               value: opt,
               groupValue: answers[linkId],
               onChanged: (value) {

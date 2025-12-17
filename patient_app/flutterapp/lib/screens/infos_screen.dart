@@ -26,10 +26,11 @@ Future<void> openRlsWebsite() async {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(      //Link zur Webseite der RLS Vereinigung wird durch Farbverlauf im App-Farbschema hervorgehoben
                   colors: [
-                    Color(0xFF4B39EF),
-                    Color(0xFF6A4BFF),
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.inversePrimary,
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),

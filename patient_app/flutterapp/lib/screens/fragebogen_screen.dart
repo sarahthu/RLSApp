@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/screens/irlss_screen.dart';
+import 'package:flutterapp/screens/irls_screen.dart';
 import 'package:flutterapp/screens/rlsqol_screen.dart';
 
 class FragebogenScreen extends StatelessWidget {
@@ -20,10 +20,10 @@ class FragebogenScreen extends StatelessWidget {
               icon: Icon(Icons.edit_note),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf FragebogenScreen, mit Zurückknopf
-                  return IRLSSScreen();
+                  return IRLSScreen();
                 }));
               },
-              label: const Text('IRLSS', style: TextStyle(fontSize: 25),),
+              label: const Text('Fragebogen 1 (IRLS)', style: TextStyle(fontSize: 25),),
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
             ElevatedButton.icon(   //Knopf zur Tagebuch Seite
@@ -33,7 +33,7 @@ class FragebogenScreen extends StatelessWidget {
                   return RLSQOLScreen();
                 }));
               },
-              label: const Text('RLS QoL', style: TextStyle(fontSize: 25),),
+              label: const Text('Fragebogen 2 (RLS QoL)', style: TextStyle(fontSize: 25),),
             ),
           ],
         ),

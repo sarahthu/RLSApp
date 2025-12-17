@@ -93,3 +93,30 @@ FragebogenScreen der flutterapp so abgeändert dass es auf 2 Seiten weiterleitet
 
 Bei IRLSSScreen und RLSQOLScreen beim "Antwort Senden" Knopf Navigator.pop hinzugefügt -> bringt Benutzer nach Absenden des Fragebogens auf das FragebogenScreen zurück.
 Format der an Django gesendeten Antworten so abgeändert, dass sie als QuestionnaireResponse Ressource gespeichert werden können
+
+
+Änderungen 17.12.25, von Sarah:
+
+Pias Arzt App hinzugefügt.
+
+Fragebögen neu eingespeichert, diesmal sodass bei jeder Antwortmöglichkeit der "Wert" der Antwortmöglichkeit für den Score dranhängt
+
+in views.py:
+- GET View "getresponse" erstellt, die für einen bestimmten Tag alle ausgefüllten Fragebögen sucht und eine JSON mit Fragentexten, Antworten, Score und weiteren Infos ans Frontend zurückgibt
+
+in ulrs.py:
+- Url für die getresponse-View hinzugefügt, mit Path Converter <str:date>
+
+Bei den Flutter Screens zum Fragebogen-Ausfüllen:
+- AlertDialog hinzugefügt, der dem Nutzer nach dem Absenden der Antworten den erzielten Score zeigt
+
+Flutter Kalender Screen:
+- Sprache des Kalenders auf Deutsch eingestellt
+- Wenn man Tag anklickt öffnet sich Liste mit allen aufgefüllten Fragebögen
+- Wenn man Fragebögen aus der Liste anklickt sieht man Details zum jeweiligen Fragebogen (um welche Uhrzeit ausgefüllt + welche Antworten hat man gegeben?)
+
+Flutter Infos Screen:
+- für Farbverlauf bei dem obersten Link Farben aus dem App-Farbeschema verwendet
+
+Flutter Erinnerungn Screen:
+- Sprache von DatePicker und TimePicker auf Deutsch umgestellt
