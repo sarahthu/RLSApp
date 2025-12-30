@@ -1,11 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:shared_preferences/shared_preferences.dart';
-=======
-import '../services/notification_service.dart'; // Import für lokale Benachrichtigungen
-import 'package:flutter/foundation.dart'; // für kIsWeb  (WEB): erkennt Chrome/Web
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
 
 enum ReminderType { medikament, arzttermin, rezept, fragebogen }
 enum ReminderFrequency { taeglich, woechentlich, alle4wochen, einmalig }
@@ -17,7 +12,6 @@ class Reminder {
     required this.time,
     this.date,
     required this.frequency,
-    required this.notificationId,
   });
 
   final ReminderType type;
@@ -25,7 +19,6 @@ class Reminder {
   final TimeOfDay time;
   final DateTime? date;
   final ReminderFrequency frequency;
-<<<<<<< HEAD
 
   Map<String, dynamic> toJson() => {
         'type': type.index,
@@ -50,9 +43,6 @@ class Reminder {
       frequency: ReminderFrequency.values[json['frequency'] as int],
     );
   }
-=======
-  final int notificationId; // Eindeutige ID zum Planen, Löschen und Ändern der Notification
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
 }
 
 class ErinnerungenScreen extends StatefulWidget {
@@ -71,7 +61,6 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
 
   final List<Reminder> _reminders = [];
 
-<<<<<<< HEAD
   @override
   void initState() {
     super.initState();
@@ -101,8 +90,6 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
     await prefs.setStringList(_storageKey, list);
   }
 
-=======
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
   bool _dateIsRequired(ReminderType type, ReminderFrequency freq) {
     return type == ReminderType.arzttermin || freq == ReminderFrequency.einmalig;
   }
@@ -141,17 +128,6 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
     return '${d.day.toString().padLeft(2, '0')}.'
         '${d.month.toString().padLeft(2, '0')}.'
         '${d.year}';
-  }
-
-  //  Kombiniert ausgewähltes Datum + Uhrzeit, Wird für das exakte Planen der Notification benötigt
-  DateTime _combineDateAndTime(DateTime date, TimeOfDay time) {
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
   }
 
   Future<void> _showAddReminderDialog() async {
@@ -215,19 +191,6 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                           final picked = await showTimePicker(
                             context: context,
                             initialTime: selectedTime ?? now,
-<<<<<<< HEAD
-=======
-                            builder: (BuildContext context, Widget? child) =>
-                                MediaQuery(
-                              data: MediaQuery.of(context)
-                                  .copyWith(alwaysUse24HourFormat: false),
-                              child: Localizations.override(
-                                context: context,
-                                locale: const Locale("de"),
-                                child: child!,
-                              ),
-                            ),
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
                           );
                           if (picked != null) {
                             setDialogState(() => selectedTime = picked);
@@ -248,10 +211,6 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                         onTap: () async {
                           final today = DateTime.now();
                           final picked = await showDatePicker(
-<<<<<<< HEAD
-=======
-                            locale: const Locale("de"),
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
                             context: context,
                             firstDate: today,
                             lastDate: DateTime(today.year + 5),
@@ -306,8 +265,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
 
                     if (selectedTime == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Bitte eine Uhrzeit wählen')),
+                        const SnackBar(content: Text('Bitte eine Uhrzeit wählen')),
                       );
                       return;
                     }
@@ -315,15 +273,10 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                     if (_dateIsRequired(selectedType, selectedFrequency) &&
                         selectedDate == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Bitte ein Datum wählen')),
+                        const SnackBar(content: Text('Bitte ein Datum wählen')),
                       );
                       return;
                     }
-
-                    // Erzeugt eine eindeutige ID für diese Notification
-                    final notificationId =
-                        DateTime.now().millisecondsSinceEpoch;
 
                     final newReminder = Reminder(
                       type: selectedType,
@@ -331,65 +284,12 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       time: selectedTime!,
                       date: selectedDate,
                       frequency: selectedFrequency,
-                      notificationId: notificationId,
                     );
 
                     setState(() => _reminders.add(newReminder));
                     await _saveReminders(); 
 
-<<<<<<< HEAD
                     if (mounted) Navigator.of(context).pop();
-=======
-                    // Berechnet den exakten Zeitpunkt für die Notification
-                    final baseDate =
-                        selectedDate ?? DateTime.now();
-                    final dateTime =
-                        _combineDateAndTime(baseDate, selectedTime!);
-
-                    // Notifications im Web/Chrome NICHT ausführen
-                    if (!kIsWeb) {
-                      // Plant die Notification je nach Häufigkeit
-                      switch (selectedFrequency) {
-                        case ReminderFrequency.taeglich:
-                          NotificationService.scheduleDailyNotification(
-                            'Erinnerung',
-                            newReminder.title,
-                            dateTime,
-                            notificationId,
-                          );
-                          break;
-
-                        case ReminderFrequency.woechentlich:
-                          NotificationService.scheduleWeeklyNotification(
-                            'Erinnerung',
-                            newReminder.title,
-                            dateTime,
-                            notificationId,
-                          );
-                          break;
-
-                        case ReminderFrequency.monatlich:
-                          NotificationService.scheduleMonthlyNotification(
-                            'Erinnerung',
-                            newReminder.title,
-                            dateTime,
-                            notificationId,
-                          );
-                          break;
-
-                        case ReminderFrequency.einmalig:
-                          NotificationService.scheduleOneTimeNotification(
-                            'Erinnerung',
-                            newReminder.title,
-                            dateTime,
-                            notificationId,
-                          );
-                          break;
-                      }
-                    }
-
-                    Navigator.of(context).pop();
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
                   },
                 ),
               ],
@@ -407,10 +307,10 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Erinnerungen'),
+        centerTitle: false,
         actions: [
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add),
               label: const Text('Neu'),
@@ -422,20 +322,10 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: _reminders.isEmpty
-<<<<<<< HEAD
             ? const Center(child: Text('Noch keine Erinnerungen'))
-=======
-            ? const Center(
-                child: Text(
-                  'Noch keine Erinnerungen',
-                  style: TextStyle(fontSize: 20),
-                ),
-              )
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
             : ListView.separated(
                 itemCount: _reminders.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: 12),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final r = _reminders[index];
                   final dateText = _formatDate(r.date);
@@ -455,8 +345,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       ),
                       title: Text(r.title),
                       subtitle: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(_typeToText(r.type)),
                           const SizedBox(height: 4),
@@ -465,11 +354,10 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                               Text(_formatTime(r.time)),
                               if (dateText != null) ...[
                                 const SizedBox(width: 12),
-                                Text('• $dateText'),
+                                Text('•  $dateText'),
                               ],
                               const SizedBox(width: 12),
-                              Text(
-                                  '• ${_frequencyToText(r.frequency)}'),
+                              Text('•  ${_frequencyToText(r.frequency)}'),
                             ],
                           ),
                         ],
@@ -477,20 +365,8 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () async {
-<<<<<<< HEAD
                           setState(() => _reminders.removeAt(index));
                           await _saveReminders(); 
-=======
-                          // 🔴 NEU (WEB): Im Web keine Notifications löschen
-                          if (!kIsWeb) {
-                            await NotificationService
-                                .cancelNotification(r.notificationId);
-                          }
-
-                          setState(() {
-                            _reminders.removeAt(index);
-                          });
->>>>>>> 72bf578 (Notification service und Implementierung für Erinnerungen)
                         },
                       ),
                     ),
