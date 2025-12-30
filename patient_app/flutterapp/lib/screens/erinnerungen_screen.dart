@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum ReminderType { medikament, arzttermin, rezept, fragebogen }
-enum ReminderFrequency { taeglich, woechentlich, monatlich, einmalig }
+enum ReminderFrequency { taeglich, woechentlich, alle4wochen, einmalig }
 
 class Reminder {
-  Reminder({  
+  Reminder({
     required this.type,
     required this.title,
     required this.time,
@@ -17,6 +19,30 @@ class Reminder {
   final TimeOfDay time;
   final DateTime? date;
   final ReminderFrequency frequency;
+
+  Map<String, dynamic> toJson() => {
+        'type': type.index,
+        'title': title,
+        'timeHour': time.hour,
+        'timeMinute': time.minute,
+        'dateMillis': date?.millisecondsSinceEpoch,
+        'frequency': frequency.index,
+      };
+
+  factory Reminder.fromJson(Map<String, dynamic> json) {
+    return Reminder(
+      type: ReminderType.values[json['type'] as int],
+      title: json['title'] as String,
+      time: TimeOfDay(
+        hour: json['timeHour'] as int,
+        minute: json['timeMinute'] as int,
+      ),
+      date: (json['dateMillis'] == null)
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(json['dateMillis'] as int),
+      frequency: ReminderFrequency.values[json['frequency'] as int],
+    );
+  }
 }
 
 class ErinnerungenScreen extends StatefulWidget {
@@ -26,10 +52,43 @@ class ErinnerungenScreen extends StatefulWidget {
   State<ErinnerungenScreen> createState() => _ErinnerungenScreenState();
 }
 
-class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
+class _ErinnerungenScreenState extends State<ErinnerungenScreen>
+    with AutomaticKeepAliveClientMixin {
+  static const _storageKey = 'rls_reminders_v1';
+
+  @override
+  bool get wantKeepAlive => true;
+
   final List<Reminder> _reminders = [];
 
   @override
+  void initState() {
+    super.initState();
+    _loadReminders();
+  }
+
+  Future<void> _loadReminders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_storageKey);
+
+    if (list == null) return;
+
+    final loaded = list
+        .map((s) => Reminder.fromJson(jsonDecode(s) as Map<String, dynamic>))
+        .toList();
+
+    setState(() {
+      _reminders
+        ..clear()
+        ..addAll(loaded);
+    });
+  }
+
+  Future<void> _saveReminders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = _reminders.map((r) => jsonEncode(r.toJson())).toList();
+    await prefs.setStringList(_storageKey, list);
+  }
 
   bool _dateIsRequired(ReminderType type, ReminderFrequency freq) {
     return type == ReminderType.arzttermin || freq == ReminderFrequency.einmalig;
@@ -54,8 +113,8 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
         return 'Täglich';
       case ReminderFrequency.woechentlich:
         return 'Wöchentlich';
-      case ReminderFrequency.monatlich:
-        return 'Monatlich';
+      case ReminderFrequency.alle4wochen:
+        return 'Alle 4 Wochen';
       case ReminderFrequency.einmalig:
         return 'Einmalig';
     }
@@ -85,7 +144,6 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
       context: context,
       builder: (context) {
         return StatefulBuilder(
-
           builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('Neue Erinnerung'),
@@ -108,13 +166,10 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                         }).toList(),
                         onChanged: (value) {
                           if (value == null) return;
-                          setDialogState(() {
-                            selectedType = value;
-                          });
+                          setDialogState(() => selectedType = value);
                         },
                       ),
                       const SizedBox(height: 12),
-
                       TextFormField(
                         controller: titleController,
                         decoration: const InputDecoration(
@@ -136,26 +191,13 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                           final picked = await showTimePicker(
                             context: context,
                             initialTime: selectedTime ?? now,
-                            //Stellt Sprache auf Deutsch:
-                            builder: (BuildContext context, Widget? child) => MediaQuery(
-                              data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-                              child: Localizations.override(
-                                context: context,
-                                locale: const Locale("de"),
-                                child: child!,
-                              ),
-                            ),
                           );
                           if (picked != null) {
-                            setDialogState(() {
-                              selectedTime = picked;
-                            });
+                            setDialogState(() => selectedTime = picked);
                           }
                         },
                         child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Uhrzeit',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Uhrzeit'),
                           child: Text(
                             selectedTime == null
                                 ? 'Zeit wählen'
@@ -169,22 +211,18 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                         onTap: () async {
                           final today = DateTime.now();
                           final picked = await showDatePicker(
-                            locale: const Locale("de"),  //Setzt Sprache des Datepickers auf Deutsch
                             context: context,
                             firstDate: today,
                             lastDate: DateTime(today.year + 5),
                             initialDate: selectedDate ?? today,
                           );
                           if (picked != null) {
-                            setDialogState(() {
-                              selectedDate = picked;
-                            });
+                            setDialogState(() => selectedDate = picked);
                           }
                         },
                         child: InputDecorator(
                           decoration: InputDecoration(
-                            labelText: _dateIsRequired(
-                                    selectedType, selectedFrequency)
+                            labelText: _dateIsRequired(selectedType, selectedFrequency)
                                 ? 'Datum (erforderlich)'
                                 : 'Datum (optional)',
                           ),
@@ -199,9 +237,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
 
                       DropdownButtonFormField<ReminderFrequency>(
                         value: selectedFrequency,
-                        decoration: const InputDecoration(
-                          labelText: 'Häufigkeit',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Häufigkeit'),
                         items: ReminderFrequency.values.map((freq) {
                           return DropdownMenuItem(
                             value: freq,
@@ -210,9 +246,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                         }).toList(),
                         onChanged: (value) {
                           if (value == null) return;
-                          setDialogState(() {
-                            selectedFrequency = value;
-                          });
+                          setDialogState(() => selectedFrequency = value);
                         },
                       ),
                     ],
@@ -226,7 +260,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                 ),
                 ElevatedButton(
                   child: const Text('Erinnerung hinzufügen'),
-                  onPressed: () {
+                  onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
 
                     if (selectedTime == null) {
@@ -252,11 +286,10 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                       frequency: selectedFrequency,
                     );
 
-                    setState(() {
-                      _reminders.add(newReminder);
-                    });
+                    setState(() => _reminders.add(newReminder));
+                    await _saveReminders(); 
 
-                    Navigator.of(context).pop();
+                    if (mounted) Navigator.of(context).pop();
                   },
                 ),
               ],
@@ -269,6 +302,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -288,7 +322,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: _reminders.isEmpty
-            ? const Center(child: Text('Noch keine Erinnerungen', style: TextStyle(fontSize: 20),))
+            ? const Center(child: Text('Noch keine Erinnerungen'))
             : ListView.separated(
                 itemCount: _reminders.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -330,10 +364,9 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen> {
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          setState(() {
-                            _reminders.removeAt(index);
-                          });
+                        onPressed: () async {
+                          setState(() => _reminders.removeAt(index));
+                          await _saveReminders(); 
                         },
                       ),
                     ),
