@@ -1,10 +1,8 @@
 //wird angezeigt wenn auf dem Kalender ein Tag ausgewählt wird
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutterapp/dio_setup.dart';
 import 'package:flutterapp/screens/response_screen.dart';
-import 'package:http/http.dart' as http;
 
 class KalenderAuswahlScreen extends StatefulWidget {
   final String date;
@@ -27,14 +25,14 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
   }
 
   get_questionnaireResponses() async {
-    final response = await http.get(Uri.parse("http://127.0.0.1:8000/api/rls/getresponse/${widget.date.substring(0,10)}"));
+    final response = await dio.get("/rls/getresponse/${widget.date.substring(0,10)}");
     if (response.statusCode == 200) {
       setState(() {
-        items = json.decode(response.body);
+        items = response.data;
         isLoading = false;
       });
     } else {
-      print('Failed to load items');
+      print('Fehler beim Laden der QuestionnaireResponses');
     }
   }
 

@@ -10,6 +10,9 @@ class ResponseScreen extends StatefulWidget {
 
 class _ResponseScreenState extends State<ResponseScreen> {
   final String title = "QuestionnaireResponse Details";
+  // Datum von der Questionnaireresponse Ressource in die richtige Zeitzone kriegen:
+  DateTime get parsedDate => DateTime.parse(widget.responsejson?["date"]);   //converts "date" from the jsonresponse into a DateTime variable
+  String get localdateString => parsedDate.toLocal().toString();  //changes Date to local timezone and converts it back into String
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +26,7 @@ class _ResponseScreenState extends State<ResponseScreen> {
           children: [
             SizedBox(height: 10,),
             Text("Fragebogen: ${widget.responsejson?["questionnairetitle"]}", style: TextStyle(fontSize: 20),),
-            Text("ausgefüllt am ${widget.responsejson?["date"].substring(0,10)}, um ${widget.responsejson?["date"].substring(11,16)} Uhr", style: TextStyle(fontSize: 15),),
+            Text("ausgefüllt am ${localdateString.substring(0,10)}, um ${localdateString.substring(11,16)} Uhr", style: TextStyle(fontSize: 15),),
             SizedBox(height: 10,),
             Card(
               color: Theme.of(context).colorScheme.inversePrimary,

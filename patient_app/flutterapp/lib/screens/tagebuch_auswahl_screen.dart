@@ -1,20 +1,20 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
 
 
-class IRLSScreen extends StatefulWidget {
-  const IRLSScreen({super.key});
+class TagebuchAuswahlScreen extends StatefulWidget {
+  //final String title = "Tagebuch Kategorie ausgewählt";
+  final dynamic title;
+  final dynamic id;
+  const TagebuchAuswahlScreen({super.key, required this.title, required this.id});
 
   @override
-  State<IRLSScreen> createState() => _IRLSScreenState();
+  State<TagebuchAuswahlScreen> createState() => _TagebuchAuswahlScreenState();
 }
 
-class _IRLSScreenState extends State<IRLSScreen> {
-  final String id = "f1"; //ID des Fragebogens auf dem FHIR Server
-  final String title = "International RLS Scale"; //Titel des Screens
-
-
+class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
+  get id => widget.id;
+  get title => widget.title;
   Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
   final Map<String, String> answers = {};
   bool loading = true; //True solange Daten geladen werden
@@ -171,7 +171,44 @@ class _IRLSScreenState extends State<IRLSScreen> {
           //Jede Frage anzeigen
           for (final item in items)
             _buildQuestionItem(item),
-          const SizedBox(height: 20),
+          SizedBox(height: 5),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Öffentliche Tagebucheinträge", style: TextStyle(fontWeight: FontWeight.bold),),
+                SizedBox(height:5),
+                TextField(    //Eingabefeld für das Passwort
+                    minLines: 4,
+                    maxLines: 10,
+                    decoration: InputDecoration(
+                      hintText: 'Auf Einträge in diesem Feld kann Ihr Arzt auch zugreifen',
+                      border: OutlineInputBorder(),
+                    ),
+                ),
+              ]
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Private Tagebucheinträge", style: TextStyle(fontWeight: FontWeight.bold),),
+                SizedBox(height:3),
+                TextField(    //Eingabefeld für das Passwort
+                    minLines: 4,
+                    maxLines: 10,
+                    decoration: InputDecoration(
+                      hintText: 'Auf Einträge in diesem Feld können nur Sie zugreifen',
+                      border: OutlineInputBorder(),
+                    ),
+                ),
+              ]
+            ),
+          ),
+          SizedBox(height:40),
           // Button zum Absenden der Antworten
           ElevatedButton(
             onPressed: () async {

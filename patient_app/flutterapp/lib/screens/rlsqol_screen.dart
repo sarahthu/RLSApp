@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutterapp/dio_setup.dart';
 
 
 class RLSQOLScreen extends StatefulWidget {
@@ -15,7 +14,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   final String title = "RLS Quality of Life Fragebogen"; //Titel des Screens
 
 
-  Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
+   Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
   final Map<String, String> answers = {};
   bool loading = true; //True solange Daten geladen werden
   String? error; //Fehlertext, falls etwas schiefgeht
@@ -34,16 +33,15 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   Future<void> loadQuestionnaire() async {
     try {
       // 10.0.2.2 ist wichtig für Android Emulator
-      final url = Uri.parse("http://127.0.0.1:8000/api/rls/questionnaire/$id");
-      final resp = await http.get(url);
+      // 127.0.0.1:8000 für Edge und co
+      final resp = await dio.get("/rls/questionnaire/$id");
 
       if (resp.statusCode == 200) {
         //JSON erfolgreich erhalten → speichern
         setState(() {
-          questionnaire = jsonDecode(resp.body);
+          questionnaire = resp.data;
           loading = false;
           maxscore = questionnaire?["item"][0]["extension"][0]["valueInteger"]; //Speichet maximal erreichbaren Score in Variable Maxscore
-
         });
       } else {
         setState(() {
@@ -93,22 +91,24 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
       ]
     };
 
-    final url = Uri.parse('http://127.0.0.1:8000/api/rls/response/');
-    // POST Request mit JSON Body
-    final resp = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(body), //JSON senden
-    );
+    try {
+      final resp = await dio.post("/rls/response/",   //verwendet dio das in dio_setup erstellt wurde
+        data: body,
+      );
 
-    if (resp.statusCode == 200) {
-        //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
-        djangoresponse = jsonDecode(resp.body);
-        score = djangoresponse?["score"];
+      if (resp.statusCode == 200) {
+          //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
+          djangoresponse = resp.data;
+          score = djangoresponse?["score"];
+
+      }
+
+      debugPrint("Antwort vom Server:");
+      debugPrint(resp.data);//Ausgabe in der Debug-Konsole
+    } catch (e) {
+      print('Fehler beim Speicher der Fragebogen-Antwort: $e');
     }
 
-    debugPrint("Antwort vom Server:");
-    debugPrint(resp.body);//Ausgabe in der Debug-Konsole
   }
 
 
@@ -131,6 +131,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
             onPressed: () {
               Navigator.of(context).pop();  //schließt Pop-up (navigiert zurück zum RLSQOLScreen)
               Navigator.of(context).pop();  //navigiert zurück zum FragebogenScreen
+
             },
           ),
         ],

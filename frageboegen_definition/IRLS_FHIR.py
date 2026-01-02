@@ -9,6 +9,7 @@ json_obj = {
   "subjectType" : ["Patient"],
   "title" : "International RLS Rating Scale",
   "date" : "2025",
+  "purpose" : "fragebogen",
   "item" : [{
     "linkId" : "0",
     "text" : "Score",

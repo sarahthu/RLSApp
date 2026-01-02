@@ -14,7 +14,7 @@ class NotificationService {
 
     // Zeitzonen
     tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation(tz.local.name));
+    tz.setLocalLocation(tz.getLocation('Europe/Berlin'));
 
     // Android Init
     const AndroidInitializationSettings androidSettings =
