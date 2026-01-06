@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class RLSQOLScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   void initState() {
     super.initState();
     loadQuestionnaire();  //Beim Start Fragebogen laden
+    loadAnswersOffline(); //lädt gespeicherte Antworten
   }
 
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
@@ -110,7 +113,30 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     }
 
   }
+  Future<void> saveAnswersOffline() async {
+    final prefs = await SharedPreferences.getInstance();
 
+  // Antworten als JSON speichern (SharedPreferences speichert nur primitive Typen wie String)
+    final jsonString = jsonEncode(answers);
+
+    await prefs.setString('rlsqol_answers_$id', jsonString);
+  }
+
+  Future<void> loadAnswersOffline() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('rlsqol_answers_$id');
+
+  // Wenn nichts gespeichert wurde, abbrechen
+    if (jsonString == null) return;
+
+    final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
+
+    setState(() {
+      answers
+       ..clear()
+        ..addAll(decoded.map((k, v) => MapEntry(k, v.toString())));
+  });
+  }
 
 
   //-------------------Pop-Up Fenster das den Score anzeigt----------------------------------------------
@@ -205,10 +231,11 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
               title: Text(opt.substring(1)),  //Zeigt die erste Stelle der AntwortOptionen (=den Score-Wert) nicht mit an
               value: opt,
               groupValue: answers[linkId],
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   answers[linkId] = value!;
                 });
+                await saveAnswersOffline();    //direkt offline speichern
               },
             ),
           const SizedBox(height: 12),
@@ -222,8 +249,9 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
       children: [
         Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
         TextField(
-          onChanged: (val) {
+          onChanged: (val) async {
             answers[linkId] = val;   //Textantwort speichern
+            await saveAnswersOffline();    //direkt offline speichern
           },
         ),
         const SizedBox(height: 12),
