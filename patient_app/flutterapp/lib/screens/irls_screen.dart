@@ -233,10 +233,11 @@ Future<void> loadAnswersOffline() async {
               title: Text(opt.substring(1)),  //Zeigt die erste Stelle der AntwortOptionen (=den Score-Wert) nicht mit an
               value: opt,
               groupValue: answers[linkId],
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   answers[linkId] = value!;
                 });
+                await saveAnswersOffline();
               },
             ),
           const SizedBox(height: 12),
@@ -250,8 +251,9 @@ Future<void> loadAnswersOffline() async {
       children: [
         Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
         TextField(
-          onChanged: (val) {
+          onChanged: (val) async {
             answers[linkId] = val;   //Textantwort speichern
+            await saveAnswersOffline();
           },
         ),
         const SizedBox(height: 12),
