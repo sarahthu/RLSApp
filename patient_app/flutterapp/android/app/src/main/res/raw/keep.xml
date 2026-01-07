@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Verhindert, dass der Android-Resource-Shrinker (R8) im Release-Build
+      Ressourcen entfernt, die zur Laufzeit von Benachrichtigungen benötigt werden.
+    -->
+
+    <!--
+      @drawable/*  : Notification-Icons
+      @mipmap/*   : App-Launcher-Icon (z. B. ic_launcher), falls für Notifications genutzt
+      @raw/*      : Benachrichtigungs-Sounds
+    -->
+    <tools:keep="@drawable/*,@mipmap/*,@raw/*" />
+
+</resources>
