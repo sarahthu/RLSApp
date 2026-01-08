@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 
 class IRLSScreen extends StatefulWidget {
@@ -29,10 +31,36 @@ class _IRLSScreenState extends State<IRLSScreen> {
   void initState() {
     super.initState();
     loadQuestionnaire();  //Beim Start Fragebogen laden
+    loadAnswersOffline();
   }
+Future<void> saveAnswersOffline() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final jsonString = jsonEncode(answers);     //Die Antworten werden als JSON-String gespeichert, damit sie nach einem App-Neustart oder ohne Internetverbindung wiederhergestellt werden können.
+
+  // Key z.B. pro Fragebogen-ID
+  await prefs.setString('irls_answers_$id', jsonString);
+}
+
+Future<void> loadAnswersOffline() async {
+  final prefs = await SharedPreferences.getInstance();
+  final jsonString = prefs.getString('irls_answers_$id');
+
+  if (jsonString == null) return;
+
+  final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
+  setState(() {
+    answers
+      ..clear()
+      ..addAll(decoded.map((k, v) => MapEntry(k, v.toString())));
+  });
+}
 
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
+    final cacheBox = Hive.box('questionnaire_cache');
+  final cacheKey = 'questionnaire_$id';
+
     try {
       // 10.0.2.2 ist wichtig für Android Emulator
       // 127.0.0.1:8000 für Edge und co
@@ -216,10 +244,11 @@ class _IRLSScreenState extends State<IRLSScreen> {
               title: Text(opt.substring(1)),  //Zeigt die erste Stelle der AntwortOptionen (=den Score-Wert) nicht mit an
               value: opt,
               groupValue: answers[linkId],
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   answers[linkId] = value!;
                 });
+                await saveAnswersOffline();
               },
             ),
           const SizedBox(height: 12),
@@ -233,8 +262,9 @@ class _IRLSScreenState extends State<IRLSScreen> {
       children: [
         Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
         TextField(
-          onChanged: (val) {
+          onChanged: (val) async {
             answers[linkId] = val;   //Textantwort speichern
+            await saveAnswersOffline();
           },
         ),
         const SizedBox(height: 12),

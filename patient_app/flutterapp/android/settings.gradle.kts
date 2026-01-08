@@ -4,10 +4,13 @@ pluginManagement {
             val properties = java.util.Properties()
             file("local.properties").inputStream().use { properties.load(it) }
             val flutterSdkPath = properties.getProperty("flutter.sdk")
-            require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
+            require(flutterSdkPath != null) {
+                "flutter.sdk not set in local.properties"
+            }
             flutterSdkPath
         }
 
+    // Bindet die Flutter-Gradle-Tools ein
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
@@ -18,9 +21,16 @@ pluginManagement {
 }
 
 plugins {
+    // Lädt das Flutter-Plugin vor der eigentlichen Projektkonfiguration
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
+
+    // Android Gradle Plugin (Version kompatibel mit
+    // flutter_local_notifications und Android 15)
     id("com.android.application") version "8.9.1" apply false
+
+    // Kotlin-Version passend zur verwendeten AGP-Version
     id("org.jetbrains.kotlin.android") version "2.1.0" apply false
 }
 
+// Einbindung des App-Moduls
 include(":app")

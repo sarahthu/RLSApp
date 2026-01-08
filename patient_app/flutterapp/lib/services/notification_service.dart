@@ -1,52 +1,97 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter/foundation.dart'; // 🔴 WEB FIX: für kIsWeb
 
+/// Zentrale Service-Klasse für lokale Benachrichtigungen.
+/// Kapselt Initialisierung, Berechtigungen und Scheduling.
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin
-      flutterLocalNotificationsPlugin =
+  static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  // 🔹 Initialisierung (Android + iOS)
-  static Future<void> init() async {
-    if (kIsWeb) return; // 🔴 WEB FIX: Web unterstützt keine Notifications
+  // Fester Notification-Channel für Medikamenten-Erinnerungen (Android)
+  static const String _channelId = 'med_channel_id';
+  static const String _channelName = 'Medikament Erinnerung';
+  static const String _channelDescription =
+      'Erinnert an die Einnahme von Medikamenten';
 
-    // Zeitzonen
+  /// Initialisiert die lokale Zeitzone des Geräts.
+  /// Notwendig für DST-sicheres Scheduling.
+  static Future<void> configureLocalTimeZone() async {
     tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation('Europe/Berlin'));
-
-    // Android Init
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    // iOS Init
-    const DarwinInitializationSettings iosSettings =
-        DarwinInitializationSettings();
-
-    const InitializationSettings settings =
-        InitializationSettings(android: androidSettings, iOS: iosSettings);
-
-    await flutterLocalNotificationsPlugin.initialize(settings);
-
-    // iOS: Permission abfragen (WICHTIG!)
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+    final timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
   }
 
-  // 🔹 Notification Details
-  static NotificationDetails _notificationDetails() {
+  /// Initialisiert das Notification-Plugin und registriert Callbacks.
+  static Future<void> init({
+    required Function(NotificationResponse)
+        onDidReceiveBackgroundNotificationResponse,
+  }) async {
+    if (kIsWeb) return;
+
+    const androidInit =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // iOS-Permissions werden bewusst später angefragt
+    const iosInit = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+
+    const settings =
+        InitializationSettings(android: androidInit, iOS: iosInit);
+
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: _onNotificationTap,
+      onDidReceiveBackgroundNotificationResponse:
+          onDidReceiveBackgroundNotificationResponse,
+    );
+
+    await _requestPermissions();
+  }
+
+  /// Fordert die notwendigen Laufzeit-Berechtigungen an
+  /// (Android 13+ / iOS).
+  static Future<void> _requestPermissions() async {
+    if (Platform.isAndroid) {
+      final androidPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+
+      await androidPlugin?.requestNotificationsPermission();
+      await androidPlugin?.requestExactAlarmsPermission();
+    }
+
+    if (Platform.isIOS) {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+    }
+  }
+
+  /// Callback für Benachrichtigungen im Vordergrund.
+  static void _onNotificationTap(NotificationResponse response) {
+    debugPrint('Notification geöffnet: ${response.payload}');
+  }
+
+  /// Zentrale Notification-Konfiguration für alle Benachrichtigungen.
+  static NotificationDetails _details() {
     return const NotificationDetails(
       android: AndroidNotificationDetails(
-        'med_channel_id',
-        'Medikament Erinnerung',
-        channelDescription: 'Erinnert an die Einnahme von Medikamenten',
+        _channelId,
+        _channelName,
+        channelDescription: _channelDescription,
         importance: Importance.max,
         priority: Priority.high,
       ),
@@ -54,48 +99,43 @@ class NotificationService {
     );
   }
 
-  // 🔹 Test-Notification nach X Sekunden
-  static Future<void> scheduleNotificationInSeconds(
-      String title, String body, int seconds, int id) async {
-    if (kIsWeb) return; // 🔴 WEB FIX
+  /// Plant eine einmalige Benachrichtigung zu einem exakten Zeitpunkt.
+  static Future<void> scheduleOnce({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime dateTime,
+    required int frequencyIndex,
+  }) async {
+    // Payload enthält alle Daten für eine spätere Neu-Planung
+    final payload = jsonEncode({
+      'id': id,
+      'title': title,
+      'body': body,
+      'dateTime': dateTime.toIso8601String(),
+      'frequency': frequencyIndex,
+    });
 
-    final scheduledDate =
-        tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
+    await _plugin.zonedSchedule(
       id,
       title,
       body,
-      scheduledDate,
-      _notificationDetails(),
-      androidAllowWhileIdle: true,
+      tz.TZDateTime.from(dateTime, tz.local),
+      _details(),
+      payload: payload,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
-  // 🔹 Tägliche Notification
-  static Future<void> scheduleDailyNotification(
-      String title, String body, DateTime time, int id) async {
-    if (kIsWeb) return; // 🔴 WEB FIX
-
-    final scheduledDate = _nextInstanceOfTime(time);
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      scheduledDate,
-      _notificationDetails(),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-  }
-
-  // 🔹 Berechnet nächsten Zeitpunkt
-  static tz.TZDateTime _nextInstanceOfTime(DateTime time) {
+  /// Plant eine täglich wiederkehrende Benachrichtigung.
+  static Future<void> scheduleDaily({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime time,
+  }) async {
     final now = tz.TZDateTime.now(tz.local);
 
     var scheduled = tz.TZDateTime(
@@ -107,81 +147,64 @@ class NotificationService {
       time.minute,
     );
 
+    // Falls die Uhrzeit heute bereits vorbei ist → morgen planen
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
 
-    return scheduled;
-  }
-
-  // 🔹 Einmalige Notification
-  static Future<void> scheduleOneTimeNotification(
-    String title,
-    String body,
-    DateTime dateTime,
-    int id,
-  ) async {
-    if (kIsWeb) return; // 🔴 WEB FIX
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
+    await _plugin.zonedSchedule(
       id,
       title,
       body,
-      tz.TZDateTime.from(dateTime, tz.local),
-      _notificationDetails(),
-      androidAllowWhileIdle: true,
+      scheduled,
+      _details(),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
-  // 🔹 Wöchentliche Notification
-  static Future<void> scheduleWeeklyNotification(
-    String title,
-    String body,
-    DateTime dateTime,
-    int id,
-  ) async {
-    if (kIsWeb) return; // 🔴 WEB FIX
+  /// Berechnet die nächste Benachrichtigung
+  /// (z. B. wöchentlich oder 4-wöchentlich) anhand des Payloads.
+  static Future<void> scheduleNextFromPayload(String payload) async {
+    final data = jsonDecode(payload);
 
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(dateTime, tz.local),
-      _notificationDetails(),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+    final int frequency = data['frequency'];
+    final DateTime lastDate = DateTime.parse(data['dateTime']);
+
+    DateTime? next;
+
+    if (frequency == 1) {
+      next = lastDate.add(const Duration(days: 7));
+    } else if (frequency == 2) {
+      next = lastDate.add(const Duration(days: 28));
+    } else {
+      return;
+    }
+
+    await scheduleOnce(
+      id: data['id'],
+      title: data['title'],
+      body: data['body'],
+      dateTime: next,
+      frequencyIndex: frequency,
     );
   }
 
-  // 🔹 Monatliche Notification
-  static Future<void> scheduleMonthlyNotification(
-    String title,
-    String body,
-    DateTime dateTime,
-    int id,
-  ) async {
-    if (kIsWeb) return; // WEB FIX
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(dateTime, tz.local),
-      _notificationDetails(),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
+  /// Löscht eine geplante Benachrichtigung anhand der ID.
+  static Future<void> cancel(int id) async {
+    await _plugin.cancel(id);
+  }  /// Test-Methode: plant eine Benachrichtigung nach 5 Sekunden.
+  /// Wird nur für Entwicklungs- und Testzwecke verwendet.
+  static Future<void> testNotificationAfter5Seconds() async {
+    await scheduleOnce(
+      id: 999,
+      title: 'Test Erinnerung',
+      body: 'Diese Notification kam nach 5 Sekunden',
+      dateTime: DateTime.now().add(const Duration(seconds: 5)),
+      frequencyIndex: 0,
     );
   }
 
-  // 🔹 Notification löschen
-  static Future<void> cancelNotification(int id) async {
-    if (kIsWeb) return; // WEB FIX
-    await flutterLocalNotificationsPlugin.cancel(id);
-  }
 }
