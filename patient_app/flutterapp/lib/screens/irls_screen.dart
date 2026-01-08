@@ -21,6 +21,7 @@ class _IRLSScreenState extends State<IRLSScreen> {
   String? error; //Fehlertext, falls etwas schiefgeht
   Map<String, dynamic>? djangoresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
   int score = 0; //Integer für den Fragebogen Score (wird bei speichern von QuestionnaireResponse von Django übergeben)
+  String interpretation = " "; //String für den Fragebogen Score Interpretation (wird bei speichern von QuestionnaireResponse von Django übergeben)
   int maxscore = 0; //Integer für dem maximalen Score der auf dem Fragebogen erzielt werden kann
 
 
@@ -82,8 +83,12 @@ class _IRLSScreenState extends State<IRLSScreen> {
       "authored" : date.toUtc().toIso8601String(),
       "item": [
         {
-          "linkId": "0",
+          "linkId": "0.1",
           "valueInteger": null
+        },
+        {
+          "linkId": "0.2",
+          "valueString": "null"
         },
         {
           "linkId": "1",
@@ -101,7 +106,7 @@ class _IRLSScreenState extends State<IRLSScreen> {
           //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
           djangoresponse = resp.data;
           score = djangoresponse?["score"];
-
+          interpretation = djangoresponse?["interpretation"];
       }
 
       debugPrint("Antwort vom Server:");
@@ -123,7 +128,12 @@ class _IRLSScreenState extends State<IRLSScreen> {
       return AlertDialog(
         title: const Text('Antworten gespeichert!'),  //Titel des Pop-up Fensters
         content: SingleChildScrollView(
-          child: Text('Ihr RLS-Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
+          child: ListBody(
+            children: <Widget>[
+              Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
+              Text(' -> $interpretation'),
+            ],
+          ),
         ),
         actionsAlignment: MainAxisAlignment.center, //"Okay" Button steht mittig vom Pop-up
         actions: <Widget>[
@@ -158,7 +168,7 @@ class _IRLSScreenState extends State<IRLSScreen> {
     }
 
     // Fragen aus dem Fragebogen holen
-    final items = (questionnaire?['item'] as List?)?[1]?['item'] as List? ?? [];
+    final items = (questionnaire?['item'] as List?)?[2]?['item'] as List? ?? [];  // speichert Fragebogen-Fragen (im FHIR Fragebogen unter items[2]) in variable items
 
     return Scaffold(
       appBar: AppBar(

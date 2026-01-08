@@ -38,7 +38,7 @@ class TagebuchScreen extends StatelessWidget {
                         title: Text("Ernährung"),
                         onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
-                          return TagebuchAuswahlScreen(id :"tachtsamkeit", title: "Ernäherung");
+                          return TagebuchAuswahlScreen(id :"ternaehrung", title: "Ernährung");
                         }));
                       }
               )
@@ -52,7 +52,7 @@ class TagebuchScreen extends StatelessWidget {
                         title: Text("Sport & Bewegung"),
                         onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
-                          return TagebuchAuswahlScreen(id :"tachtsamkeit", title: "Sport & Bewegung");
+                          return TagebuchAuswahlScreen(id :"tsport", title: "Sport & Bewegung");
                         }));
                       }
               )

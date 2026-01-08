@@ -89,15 +89,29 @@ def post_response(request):
     #Score hinzufügen
     score = 0
     #Berechnung des Scores:
-    for item in questionnaire_response["item"][1]["item"]:
+    for item in questionnaire_response["item"][2]["item"]:
         itemvalue = item["answer"][0]["valueString"][0]  #itemvalue = erste Stelle ([0]) von der gewählten Antwortmöglichkeit (valueString)
         score = score + int(itemvalue)   #castet itemvalue in Typ String und addiert den Wert zu score
 
-    #an questionnaire_response dictionary anfügen:
+    #Für RLSQol Fragebogen: Score mit 5 multiplizieren um auf Skala zwischen 0 bis 100 zu kommen
+    if questionnaire_response["questionnaire"] == "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/f2":
+        score = score * 5
+
+
+    # Score an questionnaire_response dictionary anfügen:
     questionnaire_response["item"][0] = {
-        "linkId": "0",
+        "linkId": "0.1",
         "answer": [
             {"valueInteger": score}
+        ]
+    }
+
+    # Score Interpretation an questionnaire_response dictionary anfügen:
+    questionnaire_id = questionnaire_response["questionnaire"][-2:] # speichert ID des Fragebogens; erlangt dieae aus den letzten 2 stellen ([-2:]) der URL die bei questionnaire_response["questionnaire"] drinsteht
+    questionnaire_response["item"][1] = {
+        "linkId": "0.2",
+        "answer": [
+            {"valueString": interpret_score(questionnaire_id, score)} # lässt die Interpretation des Scores bestimmten und fügt sie an das dictionary an
         ]
     }
 
@@ -123,7 +137,56 @@ def post_response(request):
     return JsonResponse({
         "valid": True,
         "message": "Antwort akzeptiert",
-        "score" : score
+        "score" : score,
+        "interpretation" : interpret_score(questionnaire_id, score)
+    })
+
+
+
+#POST: Empfängt Antworten aus Flutter
+@api_view(['POST'])  #Decorator. Macht aus Funktion rls_tagebuchresponse eine API view, bei der nur POST requests möglich sind
+@permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
+def post_tagebuchresponse(request):
+    questionnaire_response = request.data
+
+    #Score hinzufügen
+    score = 0
+    #Berechnung des Scores:
+    for item in questionnaire_response["item"][1]["item"]:
+        itemvalue = item["answer"][0]["valueString"][0]  #itemvalue = erste Stelle ([0]) von der gewählten Antwortmöglichkeit (valueString)
+        score = score + int(itemvalue)   #castet itemvalue in Typ String und addiert den Wert zu score
+
+    # Score an questionnaire_response dictionary anfügen:
+    questionnaire_response["item"][0] = {
+        "linkId": "0",
+        "answer": [
+            {"valueInteger": score}
+        ]
+    }
+
+    # fügt Patient (mit id) als Quelle der Antworten hinzu
+    questionnaire_response["source"] = {
+        "reference" : "Patient/" + request.user.patient_id,
+    }
+
+    # hängt Patienten ID ans Ende der QuestionnaireResponse ID an
+    questionnaire_response["id"] = questionnaire_response["id"] + request.user.patient_id
+
+
+    print(questionnaire_response) #druckt Fragebogen Antwort ins Terminal aus
+
+    # Verwendung von PUT um den Fragebogen genau an seine ID zu kriegen: https://stackoverflow.com/questions/107390/whats-the-difference-between-a-post-and-a-put-http-request
+    response = requests.put(
+        server_url + "/QuestionnaireResponse/" + questionnaire_response["id"], 
+        json=questionnaire_response,
+        verify=False) #verifizierung deaktiviert da wir eine selbst signiertes zertifikat verwenden
+
+    print(response.content)
+    
+    return JsonResponse({
+        "valid": True,
+        "message": "Antwort akzeptiert",
+        "score" : score,
     })
 
 
@@ -135,26 +198,60 @@ def get_questionnaire_response(request, date):  #Funktion alle RLS Questionnaire
     print(request.user.patient_id) #prints username + patient ID of anyone who uses the API View
     
     responses_list = [] #erstellt eine leere Liste
-    responses = requests.get(server_url + "/QuestionnaireResponse/?authored=" + date + "&source=Patient/" + request.user.patient_id, verify=False).json()  #holt alle Questionnaire_Responses vom gesuchten Tag vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
+    responses = requests.get(
+        server_url 
+        + "/QuestionnaireResponse/?authored=" 
+        + date + "&source=Patient/" 
+        + request.user.patient_id, 
+        verify=False).json()  #holt alle Questionnaire_Responses vom gesuchten Tag vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
+    
     if "entry" in responses:
         for r in responses["entry"]:
             questionnaire = requests.get(r["resource"]["questionnaire"], verify=False).json()
-            question_list = []
-            dictionary = {
-                "responseid" : r["resource"]["id"],
-                "questionnaireid" : questionnaire["id"],
-                "date" : r["resource"]["authored"],
-                "questionnairetitle" : questionnaire["title"],
-                "numberofquestions" : len(questionnaire["item"][1]["item"]),
-                "score" : r["resource"]["item"][0]["answer"][0]["valueInteger"],
-                "maxscore" : questionnaire["item"][0]["extension"][0]["valueInteger"],
+            if questionnaire["purpose"] == "fragebogen":  # gibt nur Fragebögen zurück, keine Tagebucheinträge
+                question_list = []
+                dictionary = {
+                    "responseid" : r["resource"]["id"],
+                    "questionnaireid" : questionnaire["id"],
+                    "date" : r["resource"]["authored"],
+                    "questionnairetitle" : questionnaire["title"],
+                    "numberofquestions" : len(questionnaire["item"][2]["item"]),
+                    "score" : r["resource"]["item"][0]["answer"][0]["valueInteger"],
+                    "maxscore" : questionnaire["item"][0]["extension"][0]["valueInteger"],
+                    "interpretation" : r["resource"]["item"][1]["answer"][0]["valueString"],
 
-            }
-            for n in range(dictionary["numberofquestions"]):
-                question_list.append({
-                    "question" : questionnaire["item"][1]["item"][n]["text"],
-                    "answer" : r["resource"]["item"][1]["item"][n]["answer"][0]["valueString"]
-                })
-            dictionary["questions"] = question_list
-            responses_list.append(dictionary)
+                }
+                for n in range(dictionary["numberofquestions"]):
+                    question_list.append({
+                        "question" : questionnaire["item"][2]["item"][n]["text"],
+                        "answer" : r["resource"]["item"][2]["item"][n]["answer"][0]["valueString"]
+                    })
+                dictionary["questions"] = question_list
+                responses_list.append(dictionary)
     return JsonResponse(responses_list, safe=False)  #safe=False allows non-dict objects to be serialized
+
+
+#----------- Methode für Score Interpretation -----------------------------------------------------------------------------------
+
+def interpret_score(questionnaire_id, score): #Methode für Interpreatation der Fragebogen scores
+    if questionnaire_id == "f1":  # für den IRLS Fragebogen....
+        if score <= 10:
+            return "milde RLS-Symptomatik"  # score kleiner gleich 10 -> mild
+        if 11 <= score <= 20:
+            return "moderate RLS-Symptomatik" # score zwischen 11 und 20 -> moderat
+        if 21 <= score <= 30:
+            return "schwere RLS-Symptomatik" # score zwischen 21 und 30 -> schwer
+        if score > 30:
+            return "sehr schwere RLS-Symptomatik" # score über 30 -> sehr schwer
+        
+    if questionnaire_id == "f2":  # für den RLSQol Fragebogen....
+        if score <= 25:
+            return "sehr eingeschränkte Lebensqualität"  # score kleiner gleich 25 -> sehr einschränkte Qol
+        if 26 <= score <= 50:
+            return "eingeschränkte Lebensqualität" # score zwischen 26 und 50 -> eingeschränkte Qol
+        if 51 <= score <= 75:
+            return "mäßig gute Lebensqualität" # score zwischen 51 und 75 -> mäßig gute Qol
+        if score > 75:
+            return "gute Lebensqualität" # score über 75 -> gute Qol
+        
+        

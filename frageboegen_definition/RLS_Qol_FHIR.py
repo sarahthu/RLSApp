@@ -11,15 +11,20 @@ json_obj = {
   "date" : "2025",
   "purpose" : "fragebogen",
   "item" : [{
-    "linkId" : "0",
+    "linkId" : "0.1",
     "text" : "Score",
     "type" : "integer",
     "extension": [
         {
           "url": "http://hl7.org/fhir/StructureDefinition/maxValue",
-          "valueInteger": 20
+          "valueInteger": 100
         }
       ]
+    },
+    {
+        "linkId" : "0.2",
+        "text" : "Score Interpretation",
+        "type": "string",
     },
     {
     "linkId" : "1",
@@ -31,11 +36,11 @@ json_obj = {
         "type": "choice",
         "required": True,
         "answerOption": [
-                    {"valueString": "0Gar nicht"},
-                    {"valueString": "1Leicht"},
+                    {"valueString": "4Gar nicht"},
+                    {"valueString": "3Leicht"},
                     {"valueString": "2Mittel"},
-                    {"valueString": "3Stark"},
-                    {"valueString": "4Sehr stark"}
+                    {"valueString": "1Stark"},
+                    {"valueString": "0Sehr stark"}
         ]
       },
       {
@@ -44,11 +49,11 @@ json_obj = {
         "type": "choice",
         "required": True,
         "answerOption": [
-                    {"valueString": "0Gar nicht"},
-                    {"valueString": "1Selten"},
+                    {"valueString": "4Gar nicht"},
+                    {"valueString": "3Selten"},
                     {"valueString": "2Manchmal"},
-                    {"valueString": "3Meistens"},
-                    {"valueString": "4Immer"}
+                    {"valueString": "1Meistens"},
+                    {"valueString": "0Immer"}
         ]
       },
       {
@@ -57,11 +62,11 @@ json_obj = {
         "type": "choice",
         "required": True,
         "answerOption": [
-                    {"valueString": "0Gar nicht"},
-                    {"valueString": "1Selten"},
+                    {"valueString": "4Gar nicht"},
+                    {"valueString": "3Selten"},
                     {"valueString": "2Manchmal"},
-                    {"valueString": "3Oft"},
-                    {"valueString": "4Sehr oft"}
+                    {"valueString": "1Oft"},
+                    {"valueString": "0Sehr oft"}
         ]
       },
         {
@@ -70,11 +75,11 @@ json_obj = {
         "type": "choice",
         "required": True,
         "answerOption": [
-                    {"valueString": "0Gar nicht"},
-                    {"valueString": "1Selten"},
+                    {"valueString": "4Gar nicht"},
+                    {"valueString": "3Selten"},
                     {"valueString": "2Manchmal"},
-                    {"valueString": "3Oft"},
-                    {"valueString": "4Sehr oft"}
+                    {"valueString": "1Oft"},
+                    {"valueString": "0Sehr oft"}
         ]
       },
         {
@@ -83,11 +88,11 @@ json_obj = {
         "type": "choice",
         "required": True,
         "answerOption": [
-                    {"valueString": "0Gar nicht"},
-                    {"valueString": "1Selten"},
+                    {"valueString": "4Gar nicht"},
+                    {"valueString": "3Selten"},
                     {"valueString": "2Manchmal"},
-                    {"valueString": "3Meistens"},
-                    {"valueString": "4Immer"}
+                    {"valueString": "1Meistens"},
+                    {"valueString": "0Immer"}
         ]
       }]
     }

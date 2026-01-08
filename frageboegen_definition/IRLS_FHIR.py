@@ -11,7 +11,7 @@ json_obj = {
   "date" : "2025",
   "purpose" : "fragebogen",
   "item" : [{
-    "linkId" : "0",
+    "linkId" : "0.1",
     "text" : "Score",
     "type" : "integer",
     "extension": [
@@ -20,6 +20,11 @@ json_obj = {
           "valueInteger": 40
         }
       ]
+    },
+    {
+        "linkId" : "0.2",
+        "text" : "Score Interpretation",
+        "type": "string",
     },
     {
     "linkId" : "1",

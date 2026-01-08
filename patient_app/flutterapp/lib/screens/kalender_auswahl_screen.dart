@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
-import 'package:flutterapp/screens/response_screen.dart';
+import 'package:flutterapp/screens/kalender_fresponse_screen.dart';
 
 class KalenderAuswahlScreen extends StatefulWidget {
   final String date;
@@ -50,42 +50,40 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
       );
     }
 
-    if (items.isEmpty) {
-      return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(title()),
       ),
-      body: Center(
-        child: Text("An diesem Tag haben Sie keine Fragebögen ausgefüllt", style: TextStyle(fontSize: 20),)
-      ),
+      body: buildfresponselist(items)
     );
-    }
-    else {
-      return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title()),
-      ),
-      body: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf FragebogenScreen, mit Zurückknopf
-                        return ResponseScreen(responsejson: items[index],);
-                      }));
-                    },
-                    child: Card(
-                      child: ListTile(
-                        title: Text(items[index]["questionnairetitle"]),
-                        subtitle: Text("Score: ${items[index]["score"]} / ${items[index]["maxscore"]}"),
-                      ),
-                    ),
-                  );
-                },
-      ),
-    );
-    }
   }
 }
+
+
+
+Widget buildfresponselist(List items){ 
+  if (items.isEmpty) { 
+    return Center(child: Text("An diesem Tag haben Sie keine Fragebögen ausgefüllt", style: TextStyle(fontSize: 20),)); 
+  } 
+  else { 
+    return ListView.builder( 
+      itemCount: items.length, 
+      itemBuilder: (context, index) { 
+        return GestureDetector( onTap: () { 
+          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf FragebogenScreen, mit Zurückknopf 
+          return KalenderfResponseScreen(responsejson: items[index],
+          ); 
+        })); 
+      }, 
+      child: Card( 
+        child: ListTile( 
+          title: Text(items[index]["questionnairetitle"]), 
+          subtitle: Text("Score: ${items[index]["score"]} / ${items[index]["maxscore"]}"), 
+        ), 
+      ), 
+      ); 
+      }, 
+      ); 
+    }
+  }

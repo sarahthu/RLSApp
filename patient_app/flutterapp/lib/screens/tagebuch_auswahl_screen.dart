@@ -3,7 +3,6 @@ import 'package:flutterapp/dio_setup.dart';
 
 
 class TagebuchAuswahlScreen extends StatefulWidget {
-  //final String title = "Tagebuch Kategorie ausgewählt";
   final dynamic title;
   final dynamic id;
   const TagebuchAuswahlScreen({super.key, required this.title, required this.id});
@@ -19,9 +18,11 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
   final Map<String, String> answers = {};
   bool loading = true; //True solange Daten geladen werden
   String? error; //Fehlertext, falls etwas schiefgeht
-  Map<String, dynamic>? djangoresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
-  int score = 0; //Integer für den Fragebogen Score (wird bei speichern von QuestionnaireResponse von Django übergeben)
-  int maxscore = 0; //Integer für dem maximalen Score der auf dem Fragebogen erzielt werden kann
+  Map<String, dynamic>? djangotagebuchresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
+  int score = 0; //Integer für den Score (wird bei speichern von Questionnairetagebuchresponse von Django übergeben)
+  int maxscore = 0; //Integer für dem maximalen Score der erzielt werden kann
+  final privateController = TextEditingController(); //Erstellt einen Controller um Eingaben im privaten Tagebuchfeld zu speichern
+  final publicController = TextEditingController(); //Erstellt einen Controller um Eingaben im öffentlichen (also für den Arzt sichbaren) Textfeld zu speichern
 
 
   @override
@@ -59,7 +60,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
   }
 
   //------------------------------Antworten an Django senden-----------------------------------------------
-  Future<void> sendResponse() async {
+  Future<void> sendtagebuchresponse() async {
     final date = DateTime.now(); //Variable die Zeit speichert zu der der Fragebogen abgesendet wurde
     if (questionnaire == null) return;
 
@@ -73,13 +74,25 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
       };
     }).toList();
 
-    //erstellt eine JSON im FHIR QuestionnaireResponse Format, mit den eingegebenen Antworten und Score=null (wir später im Backend berechnet)
+    // Variablen für die öffentlichen / privaten Tagebucheinträge die "null" sind wenn die Tagebuchfelder leer sind (damit FHIR trotzdem einen String bekommt)
+    String publicdiaryentry = "null";
+    String privatediaryentry = "null";
+
+    if (publicController.text.isNotEmpty){
+          String publicdiaryentry = publicController.text.trim();
+    }
+
+    if (privateController.text.isNotEmpty){
+          String privatediaryentry = privateController.text.trim();
+    }
+
+    //erstellt eine JSON im FHIR Questionnairetagebuchresponse Format, mit den eingegebenen Antworten und Score=null (wir später im Backend berechnet)
     final body = {
-      "resourceType": "QuestionnaireResponse", //FHIR-Format
+      "resourceType": "Questionnaireresponse", //FHIR-Format
       "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
       "questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
       "status": "completed",
-      "authored" : date.toUtc().toIso8601String(),
+      "authored" : date.toLocal().toIso8601String()+"+0"+date.timeZoneOffset.toString().substring(0,4), //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
       "item": [
         {
           "linkId": "0",
@@ -88,19 +101,30 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
         {
           "linkId": "1",
           "item": items
+        },
+        {
+          "linkId": "2",
+          "item" : [{
+            "linkId" : "2.1",
+            "text" : publicdiaryentry,
+          },
+          {
+            "linkId" : "2.2",
+            "text" : privatediaryentry,
+          }]
         }
       ]
     };
 
     try {
-      final resp = await dio.post("/rls/response/",   //verwendet dio das in dio_setup erstellt wurde
+      final resp = await dio.post("/rls/tagebuchresponse/",   //verwendet dio das in dio_setup erstellt wurde
         data: body,
       );
 
       if (resp.statusCode == 200) {
           //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
-          djangoresponse = resp.data;
-          score = djangoresponse?["score"];
+          djangotagebuchresponse = resp.data;
+          score = djangotagebuchresponse?["score"];
 
       }
 
@@ -123,7 +147,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
       return AlertDialog(
         title: const Text('Antworten gespeichert!'),  //Titel des Pop-up Fensters
         content: SingleChildScrollView(
-          child: Text('Ihr RLS-Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
+          child: Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
         ),
         actionsAlignment: MainAxisAlignment.center, //"Okay" Button steht mittig vom Pop-up
         actions: <Widget>[
@@ -131,8 +155,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
             child: const Text('Okay'),
             onPressed: () {
               Navigator.of(context).pop();  //schließt Pop-up (navigiert zurück zum RLSQOLScreen)
-              Navigator.of(context).pop();  //navigiert zurück zum FragebogenScreen
-
+              Navigator.of(context).pop();  //navigiert zurück zum TagebuchScreen
             },
           ),
         ],
@@ -180,6 +203,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
                 Text("Öffentliche Tagebucheinträge", style: TextStyle(fontWeight: FontWeight.bold),),
                 SizedBox(height:5),
                 TextField(    //Eingabefeld für das Passwort
+                    controller: publicController,   //Eingaben werden über den publicController überwacht
                     minLines: 4,
                     maxLines: 10,
                     decoration: InputDecoration(
@@ -198,6 +222,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
                 Text("Private Tagebucheinträge", style: TextStyle(fontWeight: FontWeight.bold),),
                 SizedBox(height:3),
                 TextField(    //Eingabefeld für das Passwort
+                    controller: privateController,   //Eingaben werden über den privateController überwacht
                     minLines: 4,
                     maxLines: 10,
                     decoration: InputDecoration(
@@ -212,8 +237,8 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
           // Button zum Absenden der Antworten
           ElevatedButton(
             onPressed: () async {
-                await sendResponse();  //Button wartet bis sendResponse (Funktion die Antworten zum Django Backend sendet) abgeschlossen ist
-                showMyDialog(); //wenn sendResponse fertig ist (=wenn Score unter int score gespeichert ist), wird Pop Up angezeigt 
+                await sendtagebuchresponse();  //Button wartet bis sendtagebuchresponse (Funktion die Antworten zum Django Backend sendet) abgeschlossen ist
+                showMyDialog(); //wenn sendtagebuchresponse fertig ist (=wenn Score unter int score gespeichert ist), wird Pop Up angezeigt 
             },
             child: const Text("Antworten senden"),
           ),
