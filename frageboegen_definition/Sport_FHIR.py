@@ -10,15 +10,20 @@ json_obj = {
   "date" : "2025",
   "purpose" : "tagebuch",
   "item" : [{
-    "linkId" : "0",
+    "linkId" : "0.1",
     "text" : "Score",
     "type" : "integer",
     "extension": [
         {
           "url": "http://hl7.org/fhir/StructureDefinition/maxValue",
-          "valueInteger": 10
+          "valueInteger": 6
         }
       ]
+    },
+    {
+        "linkId" : "0.2",
+        "text" : "Score Interpretation",
+        "type": "string",
     },
     {
     "linkId" : "1",
@@ -26,9 +31,8 @@ json_obj = {
     "type" : "group",
     "item" : [{
         "linkId" : "1.1",
-        "text" : "Wie aktiv waren Sie heute insgesamt?",
+        "text" : "Wie aktiv waren Sie heute?",
         "type": "choice",
-        "required": True,
         "answerOption": [
                     {"valueString": "0Wenig"},
                     {"valueString": "1Mittel"},
@@ -39,7 +43,6 @@ json_obj = {
         "linkId" : "1.2",
         "text" : "Wie anstrengend war die stärkste Aktivität heute?",
         "type": "choice",
-        "required": True,
         "answerOption": [
                     {"valueString": "0Intensiv"},
                     {"valueString": "2Moderat"},
@@ -50,33 +53,10 @@ json_obj = {
         "linkId" : "1.3",
         "text" : "Wann war Ihre stärkste Aktivität heute?",
         "type": "choice",
-        "required": True,
         "answerOption": [
                     {"valueString": "0Abends"},
                     {"valueString": "1Mittags"},
                     {"valueString": "2Morgens"}
-        ]
-      },
-        {
-        "linkId" : "1.4",
-        "text" : "Wie haben sich Ihre RLS-Symptome heute Abend/Nacht entwickelt?",
-        "type": "choice",
-        "required": True,
-        "answerOption": [
-                    {"valueString": "0Schlechter als üblich"},
-                    {"valueString": "1Wie üblich"},
-                    {"valueString": "2Besser als üblich"}
-        ]
-      },
-        {
-        "linkId" : "1.5",
-        "text" : "Wie war Ihr Schlaf letzte Nacht?",
-        "type": "choice",
-        "required": True,
-        "answerOption": [
-                    {"valueString": "0Schlecht"},
-                    {"valueString": "1Mittel"},
-                    {"valueString": "2Gut"}
         ]
       }]
     },

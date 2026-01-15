@@ -22,9 +22,10 @@ class TagebuchScreen extends StatelessWidget {
                           child: Icon(Icons.nights_stay_rounded),
                         ),
                         title: Text("Schlaf"),
+                        subtitle: Text("Am besten morgens ausfüllen"),
                         onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
-                          return TagebuchAuswahlScreen(id :"tachtsamkeit", title: "Schlaf");
+                          return TagebuchAuswahlScreen(id :"tschlaf", title: "Schlaf");
                         }));
                       }
               )
@@ -32,7 +33,7 @@ class TagebuchScreen extends StatelessWidget {
             Card(
               child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Colors.green,
+                          backgroundColor: Colors.yellow,
                           child: Icon(Icons.dining_outlined),
                         ),
                         title: Text("Ernährung"),
@@ -66,25 +67,11 @@ class TagebuchScreen extends StatelessWidget {
                         title: Text("Seelisches Wohlbefinden"),
                         onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
-                          return TagebuchAuswahlScreen(id :"tachtsamkeit", title: "Seelisches Wohlbefinden");
+                          return TagebuchAuswahlScreen(id :"twohlbefinden", title: "Seelisches Wohlbefinden");
                         }));
                       }
               )
             ),
-            Card(
-              child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.yellow,
-                          child: Icon(Icons.spa_outlined),
-                        ),
-                        title: Text("Achtsamkeit"),
-                        onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
-                          return TagebuchAuswahlScreen(id :"tachtsamkeit", title: "Achtsamkeit");
-                        }));
-                      }
-              )
-            )
           ]
         ),
         ),

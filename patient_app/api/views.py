@@ -1,3 +1,6 @@
+from datetime import datetime, time, timedelta
+from urllib.parse import quote
+from zoneinfo import ZoneInfo
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
@@ -94,7 +97,7 @@ def post_response(request):
         score = score + int(itemvalue)   #castet itemvalue in Typ String und addiert den Wert zu score
 
     #Für RLSQol Fragebogen: Score mit 5 multiplizieren um auf Skala zwischen 0 bis 100 zu kommen
-    if questionnaire_response["questionnaire"] == "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/f2":
+    if questionnaire_response["questionnaire"] == "f2":
         score = score * 5
 
 
@@ -107,13 +110,17 @@ def post_response(request):
     }
 
     # Score Interpretation an questionnaire_response dictionary anfügen:
-    questionnaire_id = questionnaire_response["questionnaire"][-2:] # speichert ID des Fragebogens; erlangt dieae aus den letzten 2 stellen ([-2:]) der URL die bei questionnaire_response["questionnaire"] drinsteht
+    questionnaire_id = questionnaire_response["questionnaire"] # speichert ID des Fragebogens; diese steht (noch) bei questionnaire_response["questionnaire"] drin
     questionnaire_response["item"][1] = {
         "linkId": "0.2",
         "answer": [
             {"valueString": interpret_score(questionnaire_id, score)} # lässt die Interpretation des Scores bestimmten und fügt sie an das dictionary an
         ]
     }
+
+    # Fügt bei "questionnaire" statt der ID des Fragebogens den Link zum Fragebogen auf dem Server ein (weil FHIR hier die canonical URL möchte)
+    questionnaire_response["questionnaire"] = server_url + "/Questionnaire/" + questionnaire_id
+
 
     # fügt Patient (mit id) als Quelle der Antworten hinzu
     questionnaire_response["source"] = {
@@ -142,69 +149,35 @@ def post_response(request):
     })
 
 
-
-#POST: Empfängt Antworten aus Flutter
-@api_view(['POST'])  #Decorator. Macht aus Funktion rls_tagebuchresponse eine API view, bei der nur POST requests möglich sind
-@permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
-def post_tagebuchresponse(request):
-    questionnaire_response = request.data
-
-    #Score hinzufügen
-    score = 0
-    #Berechnung des Scores:
-    for item in questionnaire_response["item"][1]["item"]:
-        itemvalue = item["answer"][0]["valueString"][0]  #itemvalue = erste Stelle ([0]) von der gewählten Antwortmöglichkeit (valueString)
-        score = score + int(itemvalue)   #castet itemvalue in Typ String und addiert den Wert zu score
-
-    # Score an questionnaire_response dictionary anfügen:
-    questionnaire_response["item"][0] = {
-        "linkId": "0",
-        "answer": [
-            {"valueInteger": score}
-        ]
-    }
-
-    # fügt Patient (mit id) als Quelle der Antworten hinzu
-    questionnaire_response["source"] = {
-        "reference" : "Patient/" + request.user.patient_id,
-    }
-
-    # hängt Patienten ID ans Ende der QuestionnaireResponse ID an
-    questionnaire_response["id"] = questionnaire_response["id"] + request.user.patient_id
-
-
-    print(questionnaire_response) #druckt Fragebogen Antwort ins Terminal aus
-
-    # Verwendung von PUT um den Fragebogen genau an seine ID zu kriegen: https://stackoverflow.com/questions/107390/whats-the-difference-between-a-post-and-a-put-http-request
-    response = requests.put(
-        server_url + "/QuestionnaireResponse/" + questionnaire_response["id"], 
-        json=questionnaire_response,
-        verify=False) #verifizierung deaktiviert da wir eine selbst signiertes zertifikat verwenden
-
-    print(response.content)
-    
-    return JsonResponse({
-        "valid": True,
-        "message": "Antwort akzeptiert",
-        "score" : score,
-    })
-
-
-
 @api_view(['GET'])  #Decorator
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_questionnaire_response(request, date):  #Funktion alle RLS QuestionnaireResponses von einem bestimmten Tag zurückgibt
-    print(request.user.username)
-    print(request.user.patient_id) #prints username + patient ID of anyone who uses the API View
     
     responses_list = [] #erstellt eine leere Liste
+
+    #Datum für FHIR Link vorbereiten:
+    #wandelt date (String) in datetime um
+    local_day = datetime.strptime(date, "%Y-%m-%d").date()
+
+    #bestimmt Tagesanfang und -ende in lokaler Zeit
+    start_local = datetime.combine(local_day, time.min, tzinfo=ZoneInfo("Europe/Berlin"))
+    end_local = start_local + timedelta(days=1)
+
+    #konvertiert Tagesanfang und -ende in ISO String (mit offset + millisekunden) (so wie "authored" auf FHIR gespeichert ist)
+    start_iso = start_local.isoformat(timespec='milliseconds')
+    end_iso = end_local.isoformat(timespec='milliseconds')
+
+    #encodiert die ISO String um sie in URLS verwenden zu können (mach aus + bei offset %2B)
+    start_iso = quote(start_iso)
+    end_iso = quote(end_iso)
+
+    # Request mit Tagesanfang und -ende im FHIR Link senden:    
     responses = requests.get(
         server_url 
-        + "/QuestionnaireResponse/?authored=" 
-        + date + "&source=Patient/" 
-        + request.user.patient_id, 
+        + "/QuestionnaireResponse/?authored=ge" + start_iso + "&authored=lt" + end_iso
+        + "&source=Patient/" + request.user.patient_id, 
         verify=False).json()  #holt alle Questionnaire_Responses vom gesuchten Tag vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
-    
+
     if "entry" in responses:
         for r in responses["entry"]:
             questionnaire = requests.get(r["resource"]["questionnaire"], verify=False).json()
@@ -219,6 +192,64 @@ def get_questionnaire_response(request, date):  #Funktion alle RLS Questionnaire
                     "score" : r["resource"]["item"][0]["answer"][0]["valueInteger"],
                     "maxscore" : questionnaire["item"][0]["extension"][0]["valueInteger"],
                     "interpretation" : r["resource"]["item"][1]["answer"][0]["valueString"],
+
+                }
+                for n in range(dictionary["numberofquestions"]):
+                    question_list.append({
+                        "question" : questionnaire["item"][2]["item"][n]["text"],
+                        "answer" : r["resource"]["item"][2]["item"][n]["answer"][0]["valueString"]
+                    })
+                dictionary["questions"] = question_list
+                responses_list.append(dictionary)
+    return JsonResponse(responses_list, safe=False)  #safe=False allows non-dict objects to be serialized
+
+
+
+@api_view(['GET'])  #Decorator
+@permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
+def get_tagebuch_response(request, date):  #Funktion die alle RLS TagebuchResponses von einem bestimmten Tag (in der Zeitzone Europe/Berlin, mit aktuellem Offset) zurückgibt
+        
+    responses_list = [] #erstellt eine leere Liste
+
+    #Datum für FHIR Link vorbereiten:
+    #wandelt date (String) in datetime um
+    local_day = datetime.strptime(date, "%Y-%m-%d").date()
+
+    #bestimmt Tagesanfang und -ende in lokaler Zeit
+    start_local = datetime.combine(local_day, time.min, tzinfo=ZoneInfo("Europe/Berlin"))
+    end_local = start_local + timedelta(days=1)
+
+    #konvertiert Tagesanfang und -ende in ISO String (mit offset + millisekunden) (so wie "authored" auf FHIR gespeichert ist)
+    start_iso = start_local.isoformat(timespec='milliseconds')
+    end_iso = end_local.isoformat(timespec='milliseconds')
+
+    #encodiert die ISO String um sie in URLS verwenden zu können (mach aus + bei offset %2B)
+    start_iso = quote(start_iso)
+    end_iso = quote(end_iso)
+
+    # Request mit Tagesanfang und -ende im FHIR Link senden:    
+    responses = requests.get(
+        server_url 
+        + "/QuestionnaireResponse/?authored=ge" + start_iso + "&authored=lt" + end_iso
+        + "&source=Patient/" + request.user.patient_id, 
+        verify=False).json()  #holt alle Questionnaire_Responses vom gesuchten Tag vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
+
+    if "entry" in responses:
+        for r in responses["entry"]:
+            questionnaire = requests.get(r["resource"]["questionnaire"], verify=False).json()
+            if questionnaire["purpose"] == "tagebuch":  # gibt nur Tagebucheinträge zurück, keine Fragebogen-Antworten
+                question_list = []
+                dictionary = {
+                    "responseid" : r["resource"]["id"],
+                    "questionnaireid" : questionnaire["id"],
+                    "date" : r["resource"]["authored"],
+                    "questionnairetitle" : questionnaire["title"],
+                    "numberofquestions" : len(questionnaire["item"][2]["item"]),
+                    "score" : r["resource"]["item"][0]["answer"][0]["valueInteger"],
+                    "maxscore" : questionnaire["item"][0]["extension"][0]["valueInteger"],
+                    "interpretation" : r["resource"]["item"][1]["answer"][0]["valueString"],
+                    "publicentry" : r["resource"]["item"][3]["item"][0]["text"],
+                    "privateentry" : r["resource"]["item"][3]["item"][1]["text"]
 
                 }
                 for n in range(dictionary["numberofquestions"]):
@@ -253,5 +284,11 @@ def interpret_score(questionnaire_id, score): #Methode für Interpreatation der 
             return "mäßig gute Lebensqualität" # score zwischen 51 und 75 -> mäßig gute Qol
         if score > 75:
             return "gute Lebensqualität" # score über 75 -> gute Qol
+    
+    if questionnaire_id == "tschlaf" or questionnaire_id == "twohlbefinden" or questionnaire_id == "tsport" or questionnaire_id == "ternaehrung":
+        if score <= 5:
+            return "Schelchterer Score"
+        if score > 5:
+            return "Besserer Score"
         
         

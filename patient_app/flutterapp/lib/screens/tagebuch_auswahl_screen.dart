@@ -20,6 +20,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
   String? error; //Fehlertext, falls etwas schiefgeht
   Map<String, dynamic>? djangotagebuchresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
   int score = 0; //Integer für den Score (wird bei speichern von Questionnairetagebuchresponse von Django übergeben)
+  String interpretation = " "; //String für den Fragebogen Score Interpretation (wird bei speichern von QuestionnaireResponse von Django übergeben)
   int maxscore = 0; //Integer für dem maximalen Score der erzielt werden kann
   final privateController = TextEditingController(); //Erstellt einen Controller um Eingaben im privaten Tagebuchfeld zu speichern
   final publicController = TextEditingController(); //Erstellt einen Controller um Eingaben im öffentlichen (also für den Arzt sichbaren) Textfeld zu speichern
@@ -34,8 +35,6 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
     try {
-      // 10.0.2.2 ist wichtig für Android Emulator
-      // 127.0.0.1:8000 für Edge und co
       final resp = await dio.get("/rls/questionnaire/$id");
 
       if (resp.statusCode == 200) {
@@ -79,24 +78,29 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
     String privatediaryentry = "null";
 
     if (publicController.text.isNotEmpty){
-          String publicdiaryentry = publicController.text.trim();
+          publicdiaryentry = publicController.text.trim();
     }
 
     if (privateController.text.isNotEmpty){
-          String privatediaryentry = privateController.text.trim();
+          privatediaryentry = privateController.text.trim();
     }
 
     //erstellt eine JSON im FHIR Questionnairetagebuchresponse Format, mit den eingegebenen Antworten und Score=null (wir später im Backend berechnet)
     final body = {
       "resourceType": "Questionnaireresponse", //FHIR-Format
       "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
-      "questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
+      //"questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
+      "questionnaire": id,      
       "status": "completed",
       "authored" : date.toLocal().toIso8601String()+"+0"+date.timeZoneOffset.toString().substring(0,4), //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
       "item": [
         {
-          "linkId": "0",
+          "linkId": "0.1",
           "valueInteger": null
+        },
+                {
+          "linkId": "0.2",
+          "valueString": "null"
         },
         {
           "linkId": "1",
@@ -117,7 +121,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
     };
 
     try {
-      final resp = await dio.post("/rls/tagebuchresponse/",   //verwendet dio das in dio_setup erstellt wurde
+      final resp = await dio.post("/rls/response/",   //verwendet dio das in dio_setup erstellt wurde
         data: body,
       );
 
@@ -125,6 +129,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
           //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
           djangotagebuchresponse = resp.data;
           score = djangotagebuchresponse?["score"];
+          interpretation = djangotagebuchresponse?["interpretation"];
 
       }
 
@@ -147,7 +152,12 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
       return AlertDialog(
         title: const Text('Antworten gespeichert!'),  //Titel des Pop-up Fensters
         content: SingleChildScrollView(
-          child: Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
+          child: ListBody(
+            children: <Widget>[
+              Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
+              Text(' -> $interpretation'),
+            ],
+          ),
         ),
         actionsAlignment: MainAxisAlignment.center, //"Okay" Button steht mittig vom Pop-up
         actions: <Widget>[
@@ -155,7 +165,8 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
             child: const Text('Okay'),
             onPressed: () {
               Navigator.of(context).pop();  //schließt Pop-up (navigiert zurück zum RLSQOLScreen)
-              Navigator.of(context).pop();  //navigiert zurück zum TagebuchScreen
+              Navigator.of(context).pop();  //navigiert zurück zum FragebogenScreen
+
             },
           ),
         ],
@@ -181,7 +192,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
     }
 
     // Fragen aus dem Fragebogen holen
-    final items = (questionnaire?['item'] as List?)?[1]?['item'] as List? ?? [];
+    final items = (questionnaire?['item'] as List?)?[2]?['item'] as List? ?? [];
 
     return Scaffold(
       appBar: AppBar(

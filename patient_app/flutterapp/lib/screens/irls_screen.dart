@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hive/hive.dart';
+//import 'package:hive/hive.dart';
 
 
 class IRLSScreen extends StatefulWidget {
@@ -58,12 +58,12 @@ Future<void> loadAnswersOffline() async {
 
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
-    final cacheBox = Hive.box('questionnaire_cache');
-  final cacheKey = 'questionnaire_$id';
+    //final cacheBox = Hive.box('questionnaire_cache');
+    //final cacheKey = 'questionnaire_$id';
+
+    print('Request headers: ${dio.options.headers}');
 
     try {
-      // 10.0.2.2 ist wichtig für Android Emulator
-      // 127.0.0.1:8000 für Edge und co
       final resp = await dio.get("/rls/questionnaire/$id");
 
       if (resp.statusCode == 200) {
@@ -106,7 +106,8 @@ Future<void> loadAnswersOffline() async {
     final body = {
       "resourceType": "QuestionnaireResponse", //FHIR-Format
       "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
-      "questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
+      //"questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
+      "questionnaire": id,
       "status": "completed",
       "authored" : date.toUtc().toIso8601String(),
       "item": [

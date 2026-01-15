@@ -3,10 +3,10 @@ from fhir.resources.questionnaire import Questionnaire
 
 json_obj = {
   "resourceType" : "Questionnaire",
-  "id" : "ternaehrung",
+  "id" : "twohlbefinden",
   "status" : "active",
   "subjectType" : ["Patient"],
-  "title" : "Ernährung Fragebogen",
+  "title" : "Wohlbefinden Fragebogen",
   "date" : "2025",
   "purpose" : "tagebuch",
   "item" : [{
@@ -31,32 +31,32 @@ json_obj = {
     "type" : "group",
     "item" : [{
         "linkId" : "1.1",
-        "text" : "Eisen-/nährstoffreich gegessen? (Fleisch, Fisch, Hülsenfrüchte, grünes Gemüse)",
+        "text" : "Wie würden Sie ihre Stimmung heute bewerten?",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Nichts"},
-                    {"valueString": "1Wenig"},
-                    {"valueString": "2Viel"}
+                    {"valueString": "0Nicht Gut"},
+                    {"valueString": "1Normal"},
+                    {"valueString": "2Sehr Gut"}
         ]
       },
       {
         "linkId" : "1.2",
-        "text" : "Haben sie heute magnesiumreich gegessen? (Nüsse, Samen, Vollkorn, Hülsenfrüchte)",
+        "text" : "Wie war Ihr Stressniveau heute?",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Nichts"},
-                    {"valueString": "2Wenig"},
-                    {"valueString": "1Viel"}
+                    {"valueString": "0Stark"},
+                    {"valueString": "1Mittel"},
+                    {"valueString": "2Gut"}
         ]
       },
       {
         "linkId" : "1.3",
-        "text" : "Wie waren Ihre RLS-Symptome heute im Vergleich zu sonst?",
+        "text" : "Hatten Sie heute Zeit sich zu entspannen (z.B. durch Yoga, Meditation, Atemübungen, etc.)?",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Schlechter"},
-                    {"valueString": "1Wie üblich"},
-                    {"valueString": "2Besser"}
+                    {"valueString": "0Nein"},
+                    {"valueString": "1Ein bisschen"},
+                    {"valueString": "2Ja"}
         ]
       }]
     },

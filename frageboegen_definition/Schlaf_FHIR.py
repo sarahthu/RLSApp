@@ -3,10 +3,10 @@ from fhir.resources.questionnaire import Questionnaire
 
 json_obj = {
   "resourceType" : "Questionnaire",
-  "id" : "ternaehrung",
+  "id" : "tschlaf",
   "status" : "active",
   "subjectType" : ["Patient"],
-  "title" : "Ernährung Fragebogen",
+  "title" : "Schlaf Fragebogen",
   "date" : "2025",
   "purpose" : "tagebuch",
   "item" : [{
@@ -31,32 +31,32 @@ json_obj = {
     "type" : "group",
     "item" : [{
         "linkId" : "1.1",
-        "text" : "Eisen-/nährstoffreich gegessen? (Fleisch, Fisch, Hülsenfrüchte, grünes Gemüse)",
+        "text" : "Wie würden Sie Ihre Schlafqualität heute bewerten?",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Nichts"},
-                    {"valueString": "1Wenig"},
-                    {"valueString": "2Viel"}
+                    {"valueString": "0Schlecht"},
+                    {"valueString": "1Mittel"},
+                    {"valueString": "2Gut"}
         ]
       },
       {
         "linkId" : "1.2",
-        "text" : "Haben sie heute magnesiumreich gegessen? (Nüsse, Samen, Vollkorn, Hülsenfrüchte)",
+        "text" : "Wie viele Stunden haben Sie geschlafen?",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Nichts"},
-                    {"valueString": "2Wenig"},
-                    {"valueString": "1Viel"}
+                    {"valueString": "00-5 Stunden"},
+                    {"valueString": "26-9 Stunden"},
+                    {"valueString": "19-12 Stunden"}
         ]
       },
       {
         "linkId" : "1.3",
-        "text" : "Wie waren Ihre RLS-Symptome heute im Vergleich zu sonst?",
+        "text" : "Hatten Sie Schwierigkeiten beim Einschlafen?",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Schlechter"},
-                    {"valueString": "1Wie üblich"},
-                    {"valueString": "2Besser"}
+                    {"valueString": "0Ja"},
+                    {"valueString": "1Mittel"},
+                    {"valueString": "2Nein"}
         ]
       }]
     },

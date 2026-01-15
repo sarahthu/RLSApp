@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutterapp/screens/login_screen.dart';
 import 'services/notification_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; 
 
 /// Entry-Point für Benachrichtigungs-Aktionen,
 /// die ausgeführt werden, wenn die App im Hintergrund
@@ -35,19 +37,31 @@ Future<void> main() async {
 
   }
 
-  runApp(const MyApp());
+  initializeDateFormatting().then((_) => runApp(MyApp()));  //initializeDateFormatting  wird benötigt um bei table_calendar die Sprache umzustellen
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatelessWidget { //Der Code in MyApp richtet die gesamte App ein
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      //Einstellungen um Sprache von DatePicker zu ändern:
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [
+          Locale('en'),
+          Locale('de'),  
+        ],
+        
+      // Sonstige App Einstellungen:
+      debugShowCheckedModeBanner: false, //macht das debug Banner oben rechts weg
       title: 'Patient App',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightGreen),
         useMaterial3: true,
       ),
       home: LoginScreen(),
