@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class InfosScreen extends StatelessWidget {
-  static final Uri rlsUrl = Uri.parse('https://www.restless-legs.org');
+  static final Uri rlsUrl = Uri.parse('https://www.restless-legs.org'); /// URL der RLS-Website als Uri
 
-Future<void> openRlsWebsite() async {
+  Future<void> openRlsWebsite() async {       // Öffnet die RLS-Webseite im externen Browser 
     if (!await launchUrl(rlsUrl, mode: LaunchMode.externalApplication)) {
       throw Exception('Konnte die Website nicht öffnen.');
     }
@@ -12,30 +12,32 @@ Future<void> openRlsWebsite() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(             // Obere App-Leiste mit Titel
         title: const Text('Informationen'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,           // Farbe passend zum Theme der App
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(      // Scrollbare Seite 
         padding: const EdgeInsets.all(16),
+
+        // Alles wird vertikal untereinander dargestellt
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(      //Link zur Webseite der RLS Vereinigung wird durch Farbverlauf im App-Farbschema hervorgehoben
+            Container(        //Oberer Info-Container mit Link zur Webseite 
+              width: double.infinity, 
+              padding: const EdgeInsets.all(16), 
+              decoration: BoxDecoration(    
+                gradient: LinearGradient(
                   colors: [
                     Theme.of(context).colorScheme.primary,
                     Theme.of(context).colorScheme.primary,
                     Theme.of(context).colorScheme.inversePrimary,
                   ],
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16), 
               ),
-              child: Column(
+
+              child: Column(                  // Inhalt innerhalb des Containers
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
@@ -46,31 +48,31 @@ Future<void> openRlsWebsite() async {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  const SizedBox(height: 8),                   // Abstand zwischen Titel und Beschreibung
+
+                  const Text(                                 // Beschreibungstext
                     'Besuchen Sie die offizielle Website der Deutschen '
                     'Restless Legs Vereinigung für weitere Informationen, '
                     'aktuelle Forschung und Patientennetzwerke.',
                     style: TextStyle(color: Colors.white),
                   ),
                   const SizedBox(height: 12),
-             FilledButton(
-              onPressed: openRlsWebsite,
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                ),
-                child: const Text(
-                  'Website besuchen',
-                  style: TextStyle(color: Colors.black),
+                  FilledButton(                       // Button öffnet die Website
+                    onPressed: openRlsWebsite,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                    ),
+                    child: const Text(
+                      'Website besuchen',
+                      style: TextStyle(color: Colors.black),
+                    ),
                   ),
-                ),
-
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            const _InfoSection(
+            const _InfoSection(                 //Info-Abschnitte 
               title: 'Was ist RLS?',
               body:
                   'Das Restless-Legs-Syndrom (RLS) ist eine neurologische '
@@ -80,7 +82,6 @@ Future<void> openRlsWebsite() async {
                   'Kribbeln, Ziehen oder Stechen begleitet. Die Beschwerden '
                   'bessern sich meist durch Bewegung.',
             ),
-            const SizedBox(height: 16),
 
             const _InfoSection(
               title: 'Ursachen und Formen',
@@ -90,7 +91,6 @@ Future<void> openRlsWebsite() async {
                   'Komponente. Sekundäres RLS kann z.B. durch Eisenmangel, Schwangerschaft, Nierenerkrankungen oder bestimmte '
                   'Medikamente ausgelöst werden.\n\n',
             ),
-            const SizedBox(height: 16),
 
             const _InfoSection(
               title: 'Symptome erkennen',
@@ -99,7 +99,6 @@ Future<void> openRlsWebsite() async {
                   'Verschlechterung in Ruhe und am Abend, Besserung durch Bewegung.'
                   'Viele Betroffene leiden unter Schlafstörungen und sind tagsüber müde.',
             ),
-            const SizedBox(height: 16),
 
             const _InfoSection(
               title: 'Diagnose',
@@ -128,7 +127,7 @@ Future<void> openRlsWebsite() async {
             const _InfoSection(
               title: 'Ernährung bei RLS',
               body:
-                  'Achten Sie auf eine ausgewogene, eisenreiche Ernährung (rotes Fleisch, Hülsenfrüchte, grünes Blattgemüse).' 
+                  'Achten Sie auf eine ausgewogene, eisenreiche Ernährung (rotes Fleisch, Hülsenfrüchte, grünes Blattgemüse).'
                   'Vitamin C verbessert die Eisenaufnahme. Bei nachgewiesenem Eisenmangel kann eine Supplementierung sinnvoll'
                   'sein - sprechen Sie mit Ihrem Arzt.',
             ),
@@ -140,18 +139,15 @@ Future<void> openRlsWebsite() async {
                   'Ihre Erkrankung. Suchen Sie sich gegebenenfalls Unterstützung in Selbsthilfegruppen.'
                   'Mit der richtigen Behandlung können die meisten Betroffenen eine gute Lebensqualität erreichen.',
             ),
-            const SizedBox(height: 16),
-
           ],
         ),
       ),
     );
   }
 }
-
 class _InfoSection extends StatelessWidget {
-  final String title;
-  final String body;
+  final String title; 
+  final String body;  
 
   const _InfoSection({
     required this.title,
@@ -160,28 +156,32 @@ class _InfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),         //  gleichmäßige Abstände unter jeder Card 
+      child: Card(
+        elevation: 0, 
+        margin: EdgeInsets.zero, 
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(14), 
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Titel
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              body,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ],
+              const SizedBox(height: 8),                  /// Abstand zwischen Titel und Text
+              Text(                 /// eigentlicher Fließtext
+                body,
+                style: const TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
         ),
       ),
     );
