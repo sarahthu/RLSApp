@@ -73,6 +73,13 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
       };
     }).toList();
 
+    // sortiert die Antworten Liste nach den LinkIDs (sodass die Antworten trotzdem in der richtigen Reihenfolge gespeichert werden auch wenn die Fragen nicht nach Reihenfolge beantwortet wurden)
+    items.sort((a, b) {
+      final aNum = int.tryParse(a['linkId'].toString().substring(2)) ?? 0; // nimmt die LinkID eines Eintrags ab der 2ten Stelle und konvertiert sie zu einem integer (also von 1.1 wird nur 1 betrachtet, von 1.10 nur 10)
+      final bNum = int.tryParse(b['linkId'].toString().substring(2)) ?? 0; // nimmt die LinkID eines anderen Eintrags und macht daraus auch einen integer
+      return aNum.compareTo(bNum); // sortiert nach diesem Schema die Einträge in der Liste items so, dass die Einträge nach aufsteigender Reihenfolge der LinkIds geordnet sind
+    });
+
     // Variablen für die öffentlichen / privaten Tagebucheinträge die "null" sind wenn die Tagebuchfelder leer sind (damit FHIR trotzdem einen String bekommt)
     String publicdiaryentry = "null";
     String privatediaryentry = "null";
@@ -89,10 +96,9 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
     final body = {
       "resourceType": "Questionnaireresponse", //FHIR-Format
       "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
-      //"questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
-      "questionnaire": id,      
+      "questionnaire": id, //schickt bei "questionnaire" die ID des Fragebogens (nocht nicht FHIR konform, FHIR möchte hier eine canonical URL, aber wird im Backend dann angepasst)     
       "status": "completed",
-      "authored" : date.toLocal().toIso8601String()+"+0"+date.timeZoneOffset.toString().substring(0,4), //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
+      "authored" : "${date.toLocal().toIso8601String()}+0${date.timeZoneOffset.toString().substring(0,4)}", //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
       "item": [
         {
           "linkId": "0.1",
@@ -262,14 +268,12 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
   Widget _buildQuestionItem(Map<String, dynamic> item) {
     final linkId = item["linkId"];
     final text = item["text"];
-    final type = item["type"];
 
-    if (type == "choice") {
-      final options = (item["answerOption"] as List)
+    final options = (item["answerOption"] as List)
           .map((opt) => opt["valueString"] as String)
           .toList();
 
-      return Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(text, style: const TextStyle(fontWeight: FontWeight.bold)), //Frage anzeigen
@@ -287,21 +291,6 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
             ),
           const SizedBox(height: 12),
         ],
-      );
-    }
-
-    // text answer
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
-        TextField(
-          onChanged: (val) {
-            answers[linkId] = val;   //Textantwort speichern
-          },
-        ),
-        const SizedBox(height: 12),
-      ],
     );
   }
 }
