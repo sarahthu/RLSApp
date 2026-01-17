@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/screens/auswertung_screen.dart';
+import 'package:flutterapp/screens/auswertung_nav_screen.dart';
+import 'package:flutterapp/screens/auswertung_tagebuch_screen.dart';
 import 'package:flutterapp/screens/erinnerungen_screen.dart';
 import 'package:flutterapp/screens/fragebogen_screen.dart';
 import 'package:flutterapp/screens/infos_screen.dart';

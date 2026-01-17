@@ -11,7 +11,7 @@ android {
 
     // Erforderlich für aktuelle Android-Features und
     // flutter_local_notifications (Android 13+)
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

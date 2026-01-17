@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
+//import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -22,8 +22,9 @@ class NotificationService {
   /// Notwendig für DST-sicheres Scheduling.
   static Future<void> configureLocalTimeZone() async {
     tz.initializeTimeZones();
-    final timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    //final timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
+    //tz.setLocalLocation(tz.getLocation(timeZoneName));
+    tz.setLocalLocation(tz.getLocation("Europe/Berlin"));
   }
 
   /// Initialisiert das Notification-Plugin und registriert Callbacks.

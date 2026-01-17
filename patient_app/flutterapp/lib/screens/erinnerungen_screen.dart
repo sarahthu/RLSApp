@@ -1,11 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart'; // kIsWeb
-import '../services/notification_service.dart';
 
 enum ReminderType { medikament, arzttermin, rezept, fragebogen }
-// WIE und WANN Benachrichtigungen geplant werden
 enum ReminderFrequency { taeglich, woechentlich, alle4wochen, einmalig }
 
 class Reminder {
@@ -15,7 +12,6 @@ class Reminder {
     required this.time,
     this.date,
     required this.frequency,
-    required this.notificationId,
   });
 
   final ReminderType type;
@@ -23,7 +19,6 @@ class Reminder {
   final TimeOfDay time;
   final DateTime? date;
   final ReminderFrequency frequency;
-  final int notificationId;
 
   Map<String, dynamic> toJson() => {
         'type': type.index,
@@ -32,22 +27,20 @@ class Reminder {
         'timeMinute': time.minute,
         'dateMillis': date?.millisecondsSinceEpoch,
         'frequency': frequency.index,
-        'notificationId': notificationId,
       };
 
   factory Reminder.fromJson(Map<String, dynamic> json) {
     return Reminder(
-      type: ReminderType.values[json['type']],
-      title: json['title'],
+      type: ReminderType.values[json['type'] as int],
+      title: json['title'] as String,
       time: TimeOfDay(
-        hour: json['timeHour'],
-        minute: json['timeMinute'],
+        hour: json['timeHour'] as int,
+        minute: json['timeMinute'] as int,
       ),
-      date: json['dateMillis'] == null
+      date: (json['dateMillis'] == null)
           ? null
-          : DateTime.fromMillisecondsSinceEpoch(json['dateMillis']),
-      frequency: ReminderFrequency.values[json['frequency']],
-      notificationId: json['notificationId'],
+          : DateTime.fromMillisecondsSinceEpoch(json['dateMillis'] as int),
+      frequency: ReminderFrequency.values[json['frequency'] as int],
     );
   }
 }
@@ -77,27 +70,44 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
   Future<void> _loadReminders() async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList(_storageKey);
+
     if (list == null) return;
+
+    final loaded = list
+        .map((s) => Reminder.fromJson(jsonDecode(s) as Map<String, dynamic>))
+        .toList();
 
     setState(() {
       _reminders
         ..clear()
-        ..addAll(list.map((e) => Reminder.fromJson(jsonDecode(e))));
+        ..addAll(loaded);
     });
   }
 
   Future<void> _saveReminders() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-      _storageKey,
-      _reminders.map((e) => jsonEncode(e.toJson())).toList(),
-    );
+    final list = _reminders.map((r) => jsonEncode(r.toJson())).toList();
+    await prefs.setStringList(_storageKey, list);
   }
 
-  String _formatTime(TimeOfDay t) =>
-      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')} Uhr';
+  bool _dateIsRequired(ReminderType type, ReminderFrequency freq) {
+    return type == ReminderType.arzttermin || freq == ReminderFrequency.einmalig;
+  }
 
-  String _frequencyText(ReminderFrequency f) {
+  String _typeToText(ReminderType type) {
+    switch (type) {
+      case ReminderType.medikament:
+        return 'Medikament';
+      case ReminderType.arzttermin:
+        return 'Arzttermin';
+      case ReminderType.rezept:
+        return 'Rezept';
+      case ReminderType.fragebogen:
+        return 'Fragebogen';
+    }
+  }
+
+  String _frequencyToText(ReminderFrequency f) {
     switch (f) {
       case ReminderFrequency.taeglich:
         return 'Täglich';
@@ -110,214 +120,259 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
     }
   }
 
-  DateTime _combine(DateTime d, TimeOfDay t) =>
-      DateTime(d.year, d.month, d.day, t.hour, t.minute);
+  String _formatTime(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')} Uhr';
 
-  Future<void> _addReminderDialog() async {
+  String? _formatDate(DateTime? d) {
+    if (d == null) return null;
+    return '${d.day.toString().padLeft(2, '0')}.'
+        '${d.month.toString().padLeft(2, '0')}.'
+        '${d.year}';
+  }
+
+  Future<void> _showAddReminderDialog() async {
     final formKey = GlobalKey<FormState>();
 
-    ReminderFrequency frequency = ReminderFrequency.taeglich;
-    TimeOfDay? time;
-    DateTime? date;
-    final titleCtrl = TextEditingController();
+    ReminderType selectedType = ReminderType.medikament;
+    ReminderFrequency selectedFrequency = ReminderFrequency.taeglich;
+    final titleController = TextEditingController();
+
+    TimeOfDay? selectedTime;
+    DateTime? selectedDate;
 
     await showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setStateDialog) => AlertDialog(
-          title: const Text('Neue Erinnerung'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Titel'),
-                  validator: (v) =>
-                      v == null || v.isEmpty ? 'Titel fehlt' : null,
-                ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                    );
-                    if (picked != null) {
-                      setStateDialog(() => time = picked);
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration:
-                        const InputDecoration(labelText: 'Uhrzeit'),
-                    child: Text(
-                        time == null ? 'Zeit wählen' : _formatTime(time!)),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Neue Erinnerung'),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DropdownButtonFormField<ReminderType>(
+                        value: selectedType,
+                        decoration: const InputDecoration(
+                          labelText: 'Art der Erinnerung',
+                        ),
+                        items: ReminderType.values.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(_typeToText(type)),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setDialogState(() => selectedType = value);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: titleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Titel',
+                          hintText: 'z. B. Medikamentenname oder Termin',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Bitte einen Titel eingeben';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      InkWell(
+                        onTap: () async {
+                          final now = TimeOfDay.now();
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: selectedTime ?? now,
+                          );
+                          if (picked != null) {
+                            setDialogState(() => selectedTime = picked);
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: const InputDecoration(labelText: 'Uhrzeit'),
+                          child: Text(
+                            selectedTime == null
+                                ? 'Zeit wählen'
+                                : _formatTime(selectedTime!),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      InkWell(
+                        onTap: () async {
+                          final today = DateTime.now();
+                          final picked = await showDatePicker(
+                            context: context,
+                            firstDate: today,
+                            lastDate: DateTime(today.year + 5),
+                            initialDate: selectedDate ?? today,
+                          );
+                          if (picked != null) {
+                            setDialogState(() => selectedDate = picked);
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: _dateIsRequired(selectedType, selectedFrequency)
+                                ? 'Datum (erforderlich)'
+                                : 'Datum (optional)',
+                          ),
+                          child: Text(
+                            selectedDate == null
+                                ? 'Datum wählen'
+                                : _formatDate(selectedDate!)!,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      DropdownButtonFormField<ReminderFrequency>(
+                        value: selectedFrequency,
+                        decoration: const InputDecoration(labelText: 'Häufigkeit'),
+                        items: ReminderFrequency.values.map((freq) {
+                          return DropdownMenuItem(
+                            value: freq,
+                            child: Text(_frequencyToText(freq)),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setDialogState(() => selectedFrequency = value);
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      firstDate: DateTime.now(),
-                      lastDate:
-                          DateTime.now().add(const Duration(days: 365 * 5)),
-                      initialDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setStateDialog(() => date = picked);
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration:
-                        const InputDecoration(labelText: 'Datum (optional)'),
-                    child: Text(
-                        date == null
-                            ? 'Heute'
-                            : date!.toLocal().toString().split(' ')[0]),
-                  ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Abbrechen'),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<ReminderFrequency>(
-                  value: frequency,
-                  items: ReminderFrequency.values
-                      .map((f) => DropdownMenuItem(
-                            value: f,
-                            child: Text(_frequencyText(f)),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setStateDialog(() => frequency = v!),
-                  decoration:
-                      const InputDecoration(labelText: 'Häufigkeit'),
+                ElevatedButton(
+                  child: const Text('Erinnerung hinzufügen'),
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) return;
+
+                    if (selectedTime == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Bitte eine Uhrzeit wählen')),
+                      );
+                      return;
+                    }
+
+                    if (_dateIsRequired(selectedType, selectedFrequency) &&
+                        selectedDate == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Bitte ein Datum wählen')),
+                      );
+                      return;
+                    }
+
+                    final newReminder = Reminder(
+                      type: selectedType,
+                      title: titleController.text.trim(),
+                      time: selectedTime!,
+                      date: selectedDate,
+                      frequency: selectedFrequency,
+                    );
+
+                    setState(() => _reminders.add(newReminder));
+                    await _saveReminders(); 
+
+                    if (mounted) Navigator.of(context).pop();
+                  },
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Abbrechen'),
-            ),
-            ElevatedButton(
-              child: const Text('Speichern'),
-              onPressed: () async {
-                if (!formKey.currentState!.validate() || time == null) return;
-
-                final id =
-                    DateTime.now().millisecondsSinceEpoch % 1000000000;
-
-                final baseDate = date ?? DateTime.now();
-                final dateTime = _combine(baseDate, time!);
-
-                if (frequency == ReminderFrequency.einmalig &&
-                    dateTime.isBefore(DateTime.now())) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content:
-                            Text('Zeitpunkt liegt in der Vergangenheit')),
-                  );
-                  return;
-                }
-
-                final reminder = Reminder(
-                  type: ReminderType.medikament,
-                  title: titleCtrl.text.trim(),
-                  time: time!,
-                  date: date,
-                  frequency: frequency,
-                  notificationId: id,
-                );
-
-                setState(() => _reminders.add(reminder));
-                await _saveReminders();
-
-                if (!kIsWeb) {
-                  switch (frequency) {
-                    case ReminderFrequency.taeglich:
-                      await NotificationService.scheduleDaily(
-                        id: id,
-                        title: 'Erinnerung',
-                        body: reminder.title,
-                        time: dateTime,
-                      );
-                      break;
-
-                    case ReminderFrequency.woechentlich:
-                      await NotificationService.scheduleOnce(
-                        id: id,
-                        title: 'Erinnerung',
-                        body: reminder.title,
-                        dateTime: dateTime,
-                        frequencyIndex: frequency.index,
-                      );
-                      break;
-
-                    case ReminderFrequency.alle4wochen:
-                      await NotificationService.scheduleOnce(
-                        id: id,
-                        title: 'Erinnerung',
-                        body: reminder.title,
-                        dateTime:
-                            dateTime.add(const Duration(days: 28)),
-                        frequencyIndex: frequency.index,
-                      );
-                      break;
-
-                    case ReminderFrequency.einmalig:
-                      await NotificationService.scheduleOnce(
-                        id: id,
-                        title: 'Erinnerung',
-                        body: reminder.title,
-                        dateTime: dateTime,
-                        frequencyIndex: frequency.index,
-                      );
-                      break;
-                  }
-                }
-
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    super.build(context); 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Erinnerungen'),
+        centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addReminderDialog,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('Neu'),
+              onPressed: _showAddReminderDialog,
+            ),
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: _reminders.length,
-        itemBuilder: (_, i) {
-          final r = _reminders[i];
-          return ListTile(
-            title: Text(r.title),
-            subtitle:
-                Text('${_formatTime(r.time)} • ${_frequencyText(r.frequency)}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () async {
-                if (!kIsWeb) {
-                  await NotificationService.cancel(r.notificationId);
-                }
-                setState(() => _reminders.removeAt(i));
-                await _saveReminders();
-              },
-            ),
-          );
-        },
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: _reminders.isEmpty
+            ? const Center(child: Text('Noch keine Erinnerungen'))
+            : ListView.separated(
+                itemCount: _reminders.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final r = _reminders[index];
+                  final dateText = _formatDate(r.date);
+
+                  return Card(
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        child: Icon(
+                          r.type == ReminderType.medikament
+                              ? Icons.medication
+                              : Icons.calendar_today,
+                        ),
+                      ),
+                      title: Text(r.title),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_typeToText(r.type)),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(_formatTime(r.time)),
+                              if (dateText != null) ...[
+                                const SizedBox(width: 12),
+                                Text('•  $dateText'),
+                              ],
+                              const SizedBox(width: 12),
+                              Text('•  ${_frequencyToText(r.frequency)}'),
+                            ],
+                          ),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () async {
+                          setState(() => _reminders.removeAt(index));
+                          await _saveReminders(); 
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }
