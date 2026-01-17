@@ -9,7 +9,7 @@ class KalendertResponseScreen extends StatefulWidget {
 }
 
 class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
-  final String title = "QuestionnaireResponse Details";
+  final String title = "Tagebucheintrag Details";
   // Datum von der Questionnaireresponse Ressource in die richtige Zeitzone
   //DateTime get parsedDate => DateTime.parse(widget.responsejson?["date"]);   //converts "date" from the jsonresponse into a DateTime variable
   //String get localdateString => parsedDate.toLocal().toString();  //changes Date to local timezone and converts it back into String
@@ -86,7 +86,7 @@ class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
 
 Widget formatiereEntry(text) {
   if (text == "null") {
-    return Text("Kein Tagebucheintrag vorhanden");
+    return Text("Kein Tagebucheintrag vorhanden", style: TextStyle(color: Colors.grey[500]),);
   }
   else {
     return Text(text);

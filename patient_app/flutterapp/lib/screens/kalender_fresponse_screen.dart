@@ -9,7 +9,7 @@ class KalenderfResponseScreen extends StatefulWidget {
 }
 
 class _KalenderfResponseScreenState extends State<KalenderfResponseScreen> {
-  final String title = "QuestionnaireResponse Details";
+  final String title = "Fragebogenantwort Details";
   // Datum von der Questionnaireresponse Ressource in die richtige Zeitzone
   //DateTime get parsedDate => DateTime.parse(widget.responsejson?["date"]);   //converts "date" from the jsonresponse into a DateTime variable
   //String get localdateString => parsedDate.toLocal().toString();  //changes Date to local timezone and converts it back into String

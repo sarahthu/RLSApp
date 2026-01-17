@@ -39,7 +39,7 @@ server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_questionnaire(request, id):
     print(request.user.username)
-    print(request.user.patient_id) #prints username + patient ID of anyone who uses the API View
+    print(request.user.patient_id) #gibt username und ID von dem Patienten zurück der die APi verwendet
     response = requests.get(server_url + "/Questionnaire/" + id, verify=False)  #holt Fragebogen im JSON Format vom FHIR Server
     rls_questionnaire=response.json()  #macht aus JSON ein Python Objekt (hier: ein Dictionary)
     return JsonResponse(rls_questionnaire)
@@ -78,6 +78,28 @@ def post_patient(request):
         "valid": True,
         "message": "Patient empfangen",
     })
+
+
+#GET
+@api_view(['GET'])  #Decorator. Macht aus Funktion get_patient eine API view, bei der nur GET requests möglich sind
+@permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
+def get_patient(request):
+    # holt die Daten des angelemeldeten Patienten vom FHIR Server
+    response = requests.get(
+        server_url + "/Patient/" + request.user.patient_id, 
+        verify=False) #verifizierung deaktiviert da wir ein selbst signiertes zertifikat verwenden
+
+    patient_data = response.json()
+
+    dictionary = {       #erstellt ein neues Dictionary das Vorname, Nachname und Geburtsdatum des Patienten enthält
+        "vorname" : patient_data["name"][0]["given"][0],
+        "nachname" : patient_data["name"][0]["family"],
+        "geburtsdatum" : patient_data["birthDate"],
+    }
+
+    # gibt das Dictionary als JsonResponse zurück
+    return JsonResponse(dictionary)
+
 
 
 #POST: Empfängt Antworten aus Flutter
@@ -260,6 +282,44 @@ def get_tagebuch_response(request, date):  #Funktion die alle RLS TagebuchRespon
                 dictionary["questions"] = question_list
                 responses_list.append(dictionary)
     return JsonResponse(responses_list, safe=False)  #safe=False allows non-dict objects to be serialized
+
+
+
+@api_view(['GET'])  #Decorator
+@permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
+def get_diagrammdaten(request, id):  #Funktion die alle Responses für einen einzelnen Fragebogen zurückgibt
+    
+    responses_list = [] #erstellt eine leere Liste
+
+    responses = requests.get(
+        server_url 
+        + "?source=Patient/" + request.user.patient_id
+        + "&_count=1000", 
+        verify=False).json()  #holt die letzten 1000 (oder weniger) Questionnaire_Responses vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
+
+    questionnaire = requests.get(   #holt gewünschten Fragebogens vom Server
+        server_url + "/Questionnaire/" + id, 
+        verify=False).json()
+    
+    maxscore = questionnaire["item"][0]["extension"][0]["valueInteger"] # speichert den maxscore des Fragebogens
+
+    if "entry" in responses:
+        for r in responses["entry"]: # durchläuft alle Einträge in dem QuestionnaireResponse Bundle
+            if "questionnaire" in r["resource"]:
+                if r["resource"]["questionnaire"] == server_url + "/Questionnaire/" + id: # für alle Fragebogen des gewünschten Typs (mit der gegebenen ID)...
+                    
+                    dictionary = {  # erstellt ein dictionary mit datum, score, max_score und interpretation
+                        "date" : r["resource"]["authored"],
+                        "score" : r["resource"]["item"][0]["answer"][0]["valueInteger"],
+                        "maxscore" : maxscore,
+                        "interpretation" : r["resource"]["item"][1]["answer"][0]["valueString"],
+                    }
+                    
+                    responses_list.append(dictionary) # hängt das Dicstionary an die Liste an
+
+    return JsonResponse(responses_list, safe=False)  #safe=False allows non-dict objects to be serialized
+
+
 
 
 #----------- Methode für Score Interpretation -----------------------------------------------------------------------------------

@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginScreen> {
           }));
       } else {
           ScaffoldMessenger.of(context).showSnackBar(  //von VSCode KI erstellt
-            SnackBar(content: Text('Login failed')),
+            SnackBar(content: Text('Login fehlgeschlagen. \nBitte gültigen Benutzernamen und Passwort eingeben.')),
           );
       }
   }

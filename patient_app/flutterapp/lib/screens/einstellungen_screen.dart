@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutterapp/dio_setup.dart';
+import 'package:flutterapp/screens/login_screen.dart';
+import 'package:flutterapp/services/jwt_service.dart';
+
 
 class EinstellungenScreen extends StatefulWidget {
   const EinstellungenScreen({super.key});
@@ -9,11 +13,58 @@ class EinstellungenScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<EinstellungenScreen> {
-
+  final jwtService = JwtService(); //erstellt Jwtservice
   bool pushNotifications = true;     // Speichert, ob Push-Benachrichtigungen aktiviert sind
+  bool loading = true; //True solange Daten geladen werden
+  Map<String, dynamic>? profil; // Speichert Profildaten
+  String? error; //Fehlertext, falls etwas schiefgeht
+
+
+  @override
+  void initState() {
+    super.initState();
+    loadPorfile();  //Beim Start Profildaten laden
+  }
+
+  //---------------Fragebogen vom Django Server laden--------------------------------------------------
+  Future<void> loadPorfile() async {
+    try {
+      final resp = await dio.get("/rls/profil/");
+
+      if (resp.statusCode == 200) {
+        //JSON erfolgreich erhalten → speichern
+        setState(() {
+          profil = resp.data;
+          loading = false;
+        });
+      } else {
+        setState(() {
+          error = 'Fehler: ${resp.statusCode}';
+          loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        error = 'Fehler: $e';
+        loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {      // build-Methode baut die Benutzeroberfläche
+
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (error != null) {
+      return Scaffold(
+        body: Center(child: Text(error!)),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -26,13 +77,10 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
           /// ---------------- Profil ----------------
           Card(
             child: ListTile(                // Profil-Icon
-              leading: const CircleAvatar(child: Text('P')),
-              title: const Text('Patient'),
-              subtitle: const Text('RLS DiGA Patient'),
-              trailing: TextButton(                       // Button zum Bearbeiten des Profils
-                onPressed: _openEditProfileDialog,
-                child: const Text('Bearbeiten'),
-              ),
+              leading: const CircleAvatar(child: Icon(Icons.person)),
+              title: const Text('Profil', style: TextStyle(fontWeight: FontWeight.bold),),
+              // subtitle: const Text('Patienteninformationen:'),
+              subtitle: Text("Vorname: ${profil?["vorname"]}\nNachname: ${profil?["nachname"]}\nGebusrtsdatum: ${profil?["geburtsdatum"]}",),
             ),
           ),
 
@@ -50,28 +98,6 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
               leading: const Icon(Icons.lock_outline),
               title: const Text('Passwort ändern'),
               onTap: _openChangePasswordDialog,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          /// ---------------- Benachrichtigungen ----------------
-          const Text(
-            'Benachrichtigungen',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-
-          Card(                                             // Schalter für Push-Benachrichtigungen
-            child: SwitchListTile(
-              title: const Text('Push-Benachrichtigungen'),
-              subtitle: const Text('Erinnerungen und Updates'),
-              value: pushNotifications,
-              onChanged: (value) {                 // Aktualisiert den Zustand beim Umschalten
-                setState(() {
-                  pushNotifications = value;
-                });
-              },
             ),
           ),
 
@@ -113,7 +139,7 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
           /// ---------------- Abmelden ----------------
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: _logout,                     // Beim Klick wird die Logout-Funktion aufgerufen
@@ -130,7 +156,7 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Abmelden'),
-        content: const Text('Möchtest du dich wirklich abmelden?'),
+        content: const Text('Möchten Sie sich wirklich abmelden?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -146,45 +172,19 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
 
     if (confirm != true) return;
 
+    jwtService.logout; //Meldet den User ab indem AcessToken aus dem Speicher gelöscht wird
+
     ScaffoldMessenger.of(context).showSnackBar(         // Kurze Rückmeldung für den Nutzer
-      const SnackBar(content: Text('Du wurdest abgemeldet.')),
+      const SnackBar(content: Text('Sie wurden abgemeldet.')),
     );
 
-    // Ersetze LoginScreen() durch deinen echten Login-Screen!
     Navigator.pushAndRemoveUntil(               //  öffnet den Login-Screen
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => LoginScreen()),
       (route) => false,
     );
   }
  
-  /// ---------------- Dialog: Profil bearbeiten ----------------
-  void _openEditProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Profil bearbeiten'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            TextField(decoration: InputDecoration(labelText: 'Name')),
-            TextField(decoration: InputDecoration(labelText: 'E-Mail')),
-            TextField(decoration: InputDecoration(labelText: 'Telefon')),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Speichern'),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// ---------------- Dialog: Passwort ändern ----------------
   void _openChangePasswordDialog() {
@@ -220,18 +220,6 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Platzhalter: Ersetze das durch deinen echten Login-Screen
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Login Screen (Platzhalter)')),
     );
   }
 }
