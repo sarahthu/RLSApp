@@ -55,8 +55,6 @@ dependencies:
   hive: ^2.2.3
   #flutter_native_timezone: ^2.0.0
 
-  fl_chart: ^0.66.2
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
