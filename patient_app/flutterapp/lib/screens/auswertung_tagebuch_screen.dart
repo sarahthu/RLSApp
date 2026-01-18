@@ -44,7 +44,7 @@ Future<List<DiagrammPunkt>> lade_diagrammdaten(String fragebogenId) async {
 }
 
 
-//KPI-BERECHNUNG: Durchschnitt der letzten 7 Kalendertage
+//KPI-Berechnung: Durchschnitt der letzten 7 Kalendertage
 double avgLast7Days(List<DiagrammPunkt> points) {
   if (points.isEmpty) return 0;
 
@@ -64,7 +64,33 @@ double avgLast7Days(List<DiagrammPunkt> points) {
   final sum = weekPoints.fold<double>(0, (acc, p) => acc + p.score);
   return sum / weekPoints.length;
 }
+//Fasst mehrere Einträge eines Tages zu einem Tagesdurchschnitt zusammen
+List<DiagrammPunkt> aggregateDailyAverage(List<DiagrammPunkt> points) {
+  final Map<DateTime, List<DiagrammPunkt>> grouped = {};
+  // Einträge nach Kalendertag gruppieren 
+  for (final p in points) {
+    final day = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
+    grouped.putIfAbsent(day, () => []).add(p);
+  }
+  // Für jeden Tag einen Durchschnittspunkt erzeugen
+  final dailyPoints = grouped.entries.map((entry) {
+    final day = entry.key;
+    final list = entry.value;
 
+    final avg =
+        list.fold<double>(0, (sum, p) => sum + p.score) / list.length;
+
+    return DiagrammPunkt(
+      datetime: day,
+      score: avg,
+      interpretation: 'Ø Tageswert (${list.length} Einträge)',
+      maxScore: list.first.maxScore,
+    );
+  }).toList();
+//sortieren
+  dailyPoints.sort((a, b) => a.datetime.compareTo(b.datetime));
+  return dailyPoints;
+}
 //SCREEN: Tabs + KPI-Zeile oben
 
 class AuswertungTagebuchScreen extends StatelessWidget {
@@ -99,7 +125,10 @@ class AuswertungTagebuchScreen extends StatelessWidget {
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.only(top: 12),
-                  child: KpiRow(),
+                  child: SizedBox(
+                    height: 220, 
+                    child: KpiRow(),
+                  ),
                 ),
               ),
             ];
@@ -128,21 +157,25 @@ class KpiRow extends StatelessWidget {
   Future<Map<String, String>> _loadKpis() async {
     // Daten aus Backend holen (über lade_diagrammdaten)
     final sleep = await lade_diagrammdaten('tschlaf');
+    final nutrition = await lade_diagrammdaten('ternaehrung'); 
     final wellbeing = await lade_diagrammdaten('twohlbefinden');
     final sport = await lade_diagrammdaten('tsport');
 
     // Durchschnitt der letzten 7 Tage berechnen
     final sleepAvg = avgLast7Days(sleep);
+    final nutritionAvg = avgLast7Days(nutrition);
     final wellbeingAvg = avgLast7Days(wellbeing);
     final sportAvg = avgLast7Days(sport);
 
     // MaxScore (für Anzeige "x / max")
     final sleepMax = sleep.isNotEmpty ? sleep.first.maxScore : 5.0;
+    final nutritionMax = nutrition.isNotEmpty ? nutrition.first.maxScore : 5.0;
     final wellbeingMax = wellbeing.isNotEmpty ? wellbeing.first.maxScore : 5.0;
     final sportMax = sport.isNotEmpty ? sport.first.maxScore : 5.0;
 
     return {
       'sleep': '${sleepAvg.toStringAsFixed(1)} / ${sleepMax.toStringAsFixed(0)}',
+      'nutrition': '${nutritionAvg.toStringAsFixed(1)} / ${nutritionMax.toStringAsFixed(0)}',
       'wellbeing': '${wellbeingAvg.toStringAsFixed(1)} / ${wellbeingMax.toStringAsFixed(0)}',
       'sport': '${sportAvg.toStringAsFixed(1)} / ${sportMax.toStringAsFixed(0)}',
     };
@@ -175,20 +208,21 @@ class KpiRow extends StatelessWidget {
         // Werte anzeigen
         final data = snapshot.data ?? {};
         final sleepText = data['sleep'] ?? '—';
+        final nutritionText = data['nutrition'] ?? '—';
         final wellbeingText = data['wellbeing'] ?? '—';
         final sportText = data['sport'] ?? '—';
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
+            crossAxisCount: 4, 
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 6,
             mainAxisSpacing: 6,
-            childAspectRatio: 1.3,
+            childAspectRatio: 1.8,
             children: [
               KpiCard(title: 'Schlaf', value: sleepText, icon: Icons.bed),
+              KpiCard(title: 'Ernährung', value: nutritionText, icon: Icons.restaurant),
               KpiCard(title: 'Wohlbefinden', value: wellbeingText, icon: Icons.mood),
               KpiCard(title: 'Aktivität', value: sportText, icon: Icons.directions_run),
             ],
@@ -277,12 +311,23 @@ class EvaluationTab extends StatelessWidget {
         // Sortierung nach Datum
         points.sort((a, b) => a.datetime.compareTo(b.datetime));
 
-        // Datenpunkte fürs Diagramm:
-        // x = Index (0,1,2,...), y = Score
-        final spots = List.generate(
-          points.length,
-          (i) => FlSpot(i.toDouble(), points[i].score),
+        final dailyPoints = aggregateDailyAverage(points);
+        // Startdatum fürs Diagramm (erstes Tagesdatum)
+        final start = DateTime(
+          dailyPoints.first.datetime.year,
+          dailyPoints.first.datetime.month,
+          dailyPoints.first.datetime.day,
         );
+        // Spots: X = Tage seit Start, Y = Tagesdurchschnitt
+        final spots = dailyPoints.map((p) {
+          final d = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
+          final x = d.difference(start).inDays.toDouble();
+          return FlSpot(x, p.score);
+          }).toList();
+
+        // Für Achse: minX/maxX setzen
+          final minX = spots.first.x;
+          final maxX = spots.last.x;
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -296,10 +341,53 @@ class EvaluationTab extends StatelessWidget {
               height: 220,
               child: LineChart(
                 LineChartData(
+                  minX: minX,          
+                  maxX: maxX,
                   minY: 0,
                   maxY: maxScore,
                   gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(show: true),
+                  titlesData: FlTitlesData(
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 1,
+                        reservedSize: 32,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 1, // 1 Tag Abstand
+                        reservedSize: 30,
+                        getTitlesWidget: (value, meta) {
+                          final startDate = DateTime(
+                            dailyPoints.first.datetime.year,
+                            dailyPoints.first.datetime.month,
+                            dailyPoints.first.datetime.day,
+                          );
+
+                          final date = startDate.add(Duration(days: value.toInt()));
+                          final label =
+                              '${date.day.toString().padLeft(2, '0')}.'
+                              '${date.month.toString().padLeft(2, '0')}';
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              label,
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
                     LineChartBarData(
