@@ -1,8 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 
 class IRLSScreen extends StatefulWidget {
   const IRLSScreen({super.key});
@@ -31,14 +28,6 @@ class _IRLSScreenState extends State<IRLSScreen> {
     super.initState();
     loadQuestionnaire();  //Beim Start Fragebogen laden
   }
-Future<void> saveAnswersOffline() async {
-  final prefs = await SharedPreferences.getInstance();
-
-  final jsonString = jsonEncode(answers);     //Die Antworten werden als JSON-String gespeichert, damit sie nach einem App-Neustart oder ohne Internetverbindung wiederhergestellt werden können.
-
-  // Key z.B. pro Fragebogen-ID
-  await prefs.setString('irls_answers_$id', jsonString);
-}
 
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
@@ -235,7 +224,6 @@ Future<void> saveAnswersOffline() async {
                 setState(() {
                   answers[linkId] = value!;
                 });
-                await saveAnswersOffline();    //direkt offline speichern
               },
             ),
           const SizedBox(height: 12),

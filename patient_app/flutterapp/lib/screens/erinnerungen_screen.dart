@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum ReminderType { medikament, arzttermin, rezept, fragebogen }
-enum ReminderFrequency { taeglich, woechentlich, alle4wochen, einmalig }
+enum ReminderType { medikament, arzttermin, rezept, fragebogen }            // Typen der Erinnerungen 
+enum ReminderFrequency { taeglich, woechentlich, alle4wochen, einmalig }    // Wie oft die Erinnerung wiederholt werden soll
 
-class Reminder {
+class Reminder {    // Datenmodell für eine Erinnerung
   Reminder({
     required this.type,
     required this.title,
@@ -14,13 +14,14 @@ class Reminder {
     required this.frequency,
   });
 
-  final ReminderType type;
-  final String title;
-  final TimeOfDay time;
-  final DateTime? date;
-  final ReminderFrequency frequency;
+  final ReminderType type;  // Kategorie der Erinnerung (Medikament/Termin/...)
+  final String title; // Titel, der in der Liste angezeigt wird
+  final TimeOfDay time; // Uhrzeit
+  final DateTime? date; // Optionales Datum (z. B. für Arzttermin/Einmalig)
+  final ReminderFrequency frequency; // Wiederholungslogik
+  
 
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {      // Umwandlung in JSON-Map, damit es als String gespeichert werden kann
         'type': type.index,
         'title': title,
         'timeHour': time.hour,
@@ -29,7 +30,7 @@ class Reminder {
         'frequency': frequency.index,
       };
 
-  factory Reminder.fromJson(Map<String, dynamic> json) {
+  factory Reminder.fromJson(Map<String, dynamic> json) {    // Baut ein Reminder-Objekt aus einer JSON-Map wieder zusammen (fürs Laden aus dem Speicher)
     return Reminder(
       type: ReminderType.values[json['type'] as int],
       title: json['title'] as String,
@@ -59,17 +60,17 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
   @override
   bool get wantKeepAlive => true;
 
-  final List<Reminder> _reminders = [];
+  final List<Reminder> _reminders = [];   // In-Memory Liste der Erinnerungen 
 
   @override
   void initState() {
     super.initState();
-    _loadReminders();
+    _loadReminders();           // Beim Start werden gespeicherte Erinnerungen aus SharedPreferences laden
   }
 
-  Future<void> _loadReminders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_storageKey);
+  Future<void> _loadReminders() async {    // Erinnerungen aus SharedPreferences laden
+    final prefs = await SharedPreferences.getInstance();      // Zugriff auf lokalen Speicher
+    final list = prefs.getStringList(_storageKey);            // Liste von JSON-Strings holen
 
     if (list == null) return;
 
@@ -77,20 +78,20 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
         .map((s) => Reminder.fromJson(jsonDecode(s) as Map<String, dynamic>))
         .toList();
 
-    setState(() {
+    setState(() {             // State aktualisieren -> UI wird neu gebaut
       _reminders
         ..clear()
         ..addAll(loaded);
     });
   }
 
-  Future<void> _saveReminders() async {
+  Future<void> _saveReminders() async {     // Erinnerungen in SharedPreferences speichern
     final prefs = await SharedPreferences.getInstance();
     final list = _reminders.map((r) => jsonEncode(r.toJson())).toList();
     await prefs.setStringList(_storageKey, list);
   }
 
-  bool _dateIsRequired(ReminderType type, ReminderFrequency freq) {
+  bool _dateIsRequired(ReminderType type, ReminderFrequency freq) {     // Entscheidet, ob ein Datum zwingend ist
     return type == ReminderType.arzttermin || freq == ReminderFrequency.einmalig;
   }
 
@@ -120,17 +121,17 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
     }
   }
 
-  String _formatTime(TimeOfDay t) =>
+  String _formatTime(TimeOfDay t) =>            // Uhrzeit im Format HH:MM Uhr darstellen
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')} Uhr';
 
-  String? _formatDate(DateTime? d) {
+  String? _formatDate(DateTime? d) {            // Datum im Format TT.MM.JJJJ darstellen
     if (d == null) return null;
     return '${d.day.toString().padLeft(2, '0')}.'
         '${d.month.toString().padLeft(2, '0')}.'
         '${d.year}';
   }
 
-  Future<void> _showAddReminderDialog() async {
+  Future<void> _showAddReminderDialog() async {   //Dialog zum Hinzufügen einer neuen Erinnerung
     final formKey = GlobalKey<FormState>();
 
     ReminderType selectedType = ReminderType.medikament;
@@ -143,7 +144,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
     await showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
+        return StatefulBuilder(     //erlaubt setDialogState() nur im Dialog
           builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('Neue Erinnerung'),
@@ -153,7 +154,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      DropdownButtonFormField<ReminderType>(
+                      DropdownButtonFormField<ReminderType>(      // Auswahl der Art der Erinnerung
                         value: selectedType,
                         decoration: const InputDecoration(
                           labelText: 'Art der Erinnerung',
@@ -170,7 +171,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                         },
                       ),
                       const SizedBox(height: 12),
-                      TextFormField(
+                      TextFormField(                   // Titel-Eingabe (Pflichtfeld)
                         controller: titleController,
                         decoration: const InputDecoration(
                           labelText: 'Titel',
@@ -185,7 +186,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       ),
                       const SizedBox(height: 12),
 
-                      InkWell(
+                      InkWell(     // Uhrzeit auswählen
                         onTap: () async {
                           final now = TimeOfDay.now();
                           final picked = await showTimePicker(
@@ -207,7 +208,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       ),
                       const SizedBox(height: 12),
 
-                      InkWell(
+                      InkWell(   // Datum auswählen optional oder erforderlich, je nach Auswahl
                         onTap: () async {
                           final today = DateTime.now();
                           final picked = await showDatePicker(
@@ -235,7 +236,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       ),
                       const SizedBox(height: 12),
 
-                      DropdownButtonFormField<ReminderFrequency>(
+                      DropdownButtonFormField<ReminderFrequency>(   // Häufigkeit auswählen (täglich/wöchentlich/...)
                         value: selectedFrequency,
                         decoration: const InputDecoration(labelText: 'Häufigkeit'),
                         items: ReminderFrequency.values.map((freq) {
@@ -254,23 +255,23 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                 ),
               ),
               actions: [
-                TextButton(
+                TextButton(                     // Dialog abbrechen
                   child: const Text('Abbrechen'),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                ElevatedButton(
+                ElevatedButton(                   // Erinnerung anlegen + speichern
                   child: const Text('Erinnerung hinzufügen'),
-                  onPressed: () async {
+                  onPressed: () async {                       // Titel validieren
                     if (!formKey.currentState!.validate()) return;
 
-                    if (selectedTime == null) {
+                    if (selectedTime == null) {    //Uhrzeit muss gesetzt sein
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Bitte eine Uhrzeit wählen')),
                       );
                       return;
                     }
 
-                    if (_dateIsRequired(selectedType, selectedFrequency) &&
+                    if (_dateIsRequired(selectedType, selectedFrequency) &&       //Datum, wenn erforderlich ist
                         selectedDate == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Bitte ein Datum wählen')),
@@ -278,7 +279,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       return;
                     }
 
-                    final newReminder = Reminder(
+                    final newReminder = Reminder(                       // Neues Reminder Objekt aus den Dialog Eingaben erstellen
                       type: selectedType,
                       title: titleController.text.trim(),
                       time: selectedTime!,
@@ -286,7 +287,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       frequency: selectedFrequency,
                     );
 
-                    setState(() => _reminders.add(newReminder));
+                    setState(() => _reminders.add(newReminder));      // Reminder zur Liste hinzufügen und direkt speichern 
                     await _saveReminders(); 
 
                     if (mounted) Navigator.of(context).pop();
@@ -337,8 +338,8 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        child: Icon(
-                          r.type == ReminderType.medikament
+                        child: Icon(    // einfache Icon-Logik
+                          r.type == ReminderType.medikament 
                               ? Icons.medication
                               : Icons.calendar_today,
                         ),
@@ -347,17 +348,17 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(_typeToText(r.type)),
+                          Text(_typeToText(r.type)),      // Typ anzeigen
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Text(_formatTime(r.time)),
+                              Text(_formatTime(r.time)),    // Uhrzeit
                               if (dateText != null) ...[
                                 const SizedBox(width: 12),
-                                Text('•  $dateText'),
+                                Text('•  $dateText'),   // Datum 
                               ],
                               const SizedBox(width: 12),
-                              Text('•  ${_frequencyToText(r.frequency)}'),
+                              Text('•  ${_frequencyToText(r.frequency)}'),        // Häufigkeit
                             ],
                           ),
                         ],
@@ -365,7 +366,7 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () async {
-                          setState(() => _reminders.removeAt(index));
+                          setState(() => _reminders.removeAt(index));        // Löschen aus Liste + direkt speichern
                           await _saveReminders(); 
                         },
                       ),
@@ -375,5 +376,4 @@ class _ErinnerungenScreenState extends State<ErinnerungenScreen>
               ),
       ),
     );
-  }
-}
+  }}
