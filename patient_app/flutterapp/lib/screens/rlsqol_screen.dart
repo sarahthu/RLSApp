@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 
 
 class RLSQOLScreen extends StatefulWidget {
@@ -16,13 +14,12 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   final String title = "RLS Quality of Life Fragebogen"; //Titel des Screens
 
 
-  Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
+   Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
   final Map<String, String> answers = {};
   bool loading = true; //True solange Daten geladen werden
   String? error; //Fehlertext, falls etwas schiefgeht
   Map<String, dynamic>? djangoresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
   int score = 0; //Integer für den Fragebogen Score (wird bei speichern von QuestionnaireResponse von Django übergeben)
-  String interpretation = " "; //String für den Fragebogen Score Interpretation (wird bei speichern von QuestionnaireResponse von Django übergeben)
   int maxscore = 0; //Integer für dem maximalen Score der auf dem Fragebogen erzielt werden kann
 
 
@@ -35,6 +32,8 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
     try {
+      // 10.0.2.2 ist wichtig für Android Emulator
+      // 127.0.0.1:8000 für Edge und co
       final resp = await dio.get("/rls/questionnaire/$id");
 
       if (resp.statusCode == 200) {
@@ -73,28 +72,17 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
       };
     }).toList();
 
-    // sortiert die Antworten Liste nach den LinkIDs (sodass die Antworten trotzdem in der richtigen Reihenfolge gespeichert werden auch wenn die Fragen nicht nach Reihenfolge beantwortet wurden)
-    items.sort((a, b) {
-      final aNum = int.tryParse(a['linkId'].toString().substring(2)) ?? 0; // nimmt die LinkID eines Eintrags ab der 2ten Stelle und konvertiert sie zu einem integer (also von 1.1 wird nur 1 betrachtet, von 1.10 nur 10)
-      final bNum = int.tryParse(b['linkId'].toString().substring(2)) ?? 0; // nimmt die LinkID eines anderen Eintrags und macht daraus auch einen integer
-      return aNum.compareTo(bNum); // sortiert nach diesem Schema die Einträge in der Liste items so, dass die Einträge nach aufsteigender Reihenfolge der LinkIds geordnet sind
-    });
-
     //erstellt eine JSON im FHIR QuestionnaireResponse Format, mit den eingegebenen Antworten und Score=null (wir später im Backend berechnet)
     final body = {
       "resourceType": "QuestionnaireResponse", //FHIR-Format
       "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
-      "questionnaire": id,  //schickt bei "questionnaire" die ID des Fragebogens (nocht nicht FHIR konform, FHIR möchte hier eine canonical URL, aber wird im Backend dann angepasst)    
+      "questionnaire": "https://i-lv-prj-01.informatik.hs-ulm.de/Questionnaire/$id",  // Link zum Fragebogen auf dem Server
       "status": "completed",
-      "authored" : "${date.toLocal().toIso8601String()}+0${date.timeZoneOffset.toString().substring(0,4)}", //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
+      "authored" : date.toUtc().toIso8601String(),
       "item": [
         {
-          "linkId": "0.1",
+          "linkId": "0",
           "valueInteger": null
-        },
-        {
-          "linkId": "0.2",
-          "valueString": "null"
         },
         {
           "linkId": "1",
@@ -112,7 +100,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
           //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
           djangoresponse = resp.data;
           score = djangoresponse?["score"];
-          interpretation = djangoresponse?["interpretation"];
+
       }
 
       debugPrint("Antwort vom Server:");
@@ -122,16 +110,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     }
 
   }
-  Future<void> saveAnswersOffline() async {
-    final prefs = await SharedPreferences.getInstance();
-
-  // Antworten als JSON speichern (SharedPreferences speichert nur primitive Typen wie String)
-    final jsonString = jsonEncode(answers);
-
-    await prefs.setString('rlsqol_answers_$id', jsonString);
   }
-
-
   //-------------------Pop-Up Fenster das den Score anzeigt----------------------------------------------
   Future<void> showMyDialog() async {
   return showDialog<void>(
@@ -141,12 +120,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
       return AlertDialog(
         title: const Text('Antworten gespeichert!'),  //Titel des Pop-up Fensters
         content: SingleChildScrollView(
-          child: ListBody(
-            children: <Widget>[
-              Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
-              Text(' -> $interpretation'),
-            ],
-          ),
+          child: Text('Ihr RLS-Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
         ),
         actionsAlignment: MainAxisAlignment.center, //"Okay" Button steht mittig vom Pop-up
         actions: <Widget>[
@@ -164,8 +138,6 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -181,7 +153,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     }
 
     // Fragen aus dem Fragebogen holen
-    final items = (questionnaire?['item'] as List?)?[2]?['item'] as List? ?? [];  // speichert Fragebogen-Fragen (im FHIR Fragebogen unter items[2]) in variable items
+    final items = (questionnaire?['item'] as List?)?[1]?['item'] as List? ?? [];
 
     return Scaffold(
       appBar: AppBar(
@@ -202,7 +174,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
                 showMyDialog(); //wenn sendResponse fertig ist (=wenn Score unter int score gespeichert ist), wird Pop Up angezeigt 
             },
             child: const Text("Antworten senden"),
-          ),
+          )
         ],
       ),
     );
@@ -212,12 +184,14 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   Widget _buildQuestionItem(Map<String, dynamic> item) {
     final linkId = item["linkId"];
     final text = item["text"];
+    final type = item["type"];
 
-    final options = (item["answerOption"] as List)
+    if (type == "choice") {
+      final options = (item["answerOption"] as List)
           .map((opt) => opt["valueString"] as String)
           .toList();
 
-    return Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(text, style: const TextStyle(fontWeight: FontWeight.bold)), //Frage anzeigen
@@ -227,15 +201,28 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
               title: Text(opt.substring(1)),  //Zeigt die erste Stelle der AntwortOptionen (=den Score-Wert) nicht mit an
               value: opt,
               groupValue: answers[linkId],
-              onChanged: (value) async {
+              onChanged: (value)  {
                 setState(() {
                   answers[linkId] = value!;
                 });
-                await saveAnswersOffline();    //direkt offline speichern
               },
             ),
           const SizedBox(height: 12),
         ],
       );
     }
-}
+
+    // text answer
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+        TextField(
+          onChanged: (val) {
+            answers[linkId] = val;   //Textantwort speichern
+          },
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
