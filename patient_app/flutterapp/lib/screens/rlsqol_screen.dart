@@ -31,9 +31,20 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     super.initState();
     loadQuestionnaire();  //Beim Start Fragebogen laden
   }
+Future<void> saveAnswersOffline() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final jsonString = jsonEncode(answers);     //Die Antworten werden als JSON-String gespeichert, damit sie nach einem App-Neustart oder ohne Internetverbindung wiederhergestellt werden können.
+
+  // Key z.B. pro Fragebogen-ID
+  await prefs.setString('irls_answers_$id', jsonString);
+}
 
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
+
+    print('Request headers: ${dio.options.headers}');
+
     try {
       final resp = await dio.get("/rls/questionnaire/$id");
 
@@ -65,7 +76,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
 
     //Antworten im Backend-kompatiblen Format aufbauen
     final items = answers.entries.map((entry) {
-      return {
+      return <String, dynamic> {
         "linkId": entry.key, //ID der Frage
         "answer": [
           {"valueString": entry.value} //Gewählte Antwort
@@ -84,21 +95,21 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     final body = {
       "resourceType": "QuestionnaireResponse", //FHIR-Format
       "id" : "r${questionnaire!["id"]}${date.year}${date.month}${date.day}${date.hour}${date.minute}${date.second}",
-      "questionnaire": id,  //schickt bei "questionnaire" die ID des Fragebogens (nocht nicht FHIR konform, FHIR möchte hier eine canonical URL, aber wird im Backend dann angepasst)    
+      "questionnaire": id,  //schickt bei "questionnaire" die ID des Fragebogens (nocht nicht FHIR konform, FHIR möchte hier eine canonical URL, aber wird im Backend dann angepasst)
       "status": "completed",
       "authored" : "${date.toLocal().toIso8601String()}+0${date.timeZoneOffset.toString().substring(0,4)}", //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
       "item": [
         {
           "linkId": "0.1",
-          "valueInteger": null
+          "valueInteger": null  //null bei linkID 0.1 (Hier kommt später der vom Backend berechnete Score Wert hin)
         },
         {
           "linkId": "0.2",
-          "valueString": "null"
+          "valueString": "null"  //"null" bei linkID 0.2 (Hier kommt später die vom Backend bestimmte Score Interpretation hin)
         },
         {
           "linkId": "1",
-          "item": items
+          "item": items  //bei linkID wird die Liste mit den Antworten eingefügt
         }
       ]
     };
@@ -122,14 +133,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     }
 
   }
-  Future<void> saveAnswersOffline() async {
-    final prefs = await SharedPreferences.getInstance();
 
-  // Antworten als JSON speichern (SharedPreferences speichert nur primitive Typen wie String)
-    final jsonString = jsonEncode(answers);
-
-    await prefs.setString('rlsqol_answers_$id', jsonString);
-  }
 
 
   //-------------------Pop-Up Fenster das den Score anzeigt----------------------------------------------
@@ -165,7 +169,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   }
 
 
-
+  //-------------------------- Build Methode ------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     if (loading) {

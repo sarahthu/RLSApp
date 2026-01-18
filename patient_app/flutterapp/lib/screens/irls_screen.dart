@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-//import 'package:hive/hive.dart';
 
 
 class IRLSScreen extends StatefulWidget {
@@ -43,8 +42,6 @@ Future<void> saveAnswersOffline() async {
 
   //---------------Fragebogen vom Django Server laden--------------------------------------------------
   Future<void> loadQuestionnaire() async {
-    //final cacheBox = Hive.box('questionnaire_cache');
-    //final cacheKey = 'questionnaire_$id';
 
     print('Request headers: ${dio.options.headers}');
 
@@ -104,15 +101,15 @@ Future<void> saveAnswersOffline() async {
       "item": [
         {
           "linkId": "0.1",
-          "valueInteger": null
+          "valueInteger": null  //null bei linkID 0.1 (Hier kommt später der vom Backend berechnete Score Wert hin)
         },
         {
           "linkId": "0.2",
-          "valueString": "null"
+          "valueString": "null"  //"null" bei linkID 0.2 (Hier kommt später die vom Backend bestimmte Score Interpretation hin)
         },
         {
           "linkId": "1",
-          "item": items
+          "item": items  //bei linkID wird die Liste mit den Antworten eingefügt
         }
       ]
     };
@@ -172,7 +169,7 @@ Future<void> saveAnswersOffline() async {
   }
 
 
-
+  //-------------------------- Build Methode ------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     if (loading) {

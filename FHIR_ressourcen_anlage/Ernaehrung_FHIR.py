@@ -34,9 +34,9 @@ json_obj = {
         "text" : "Eisen-/nährstoffreich gegessen? (Fleisch, Fisch, Hülsenfrüchte, grünes Gemüse)",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Nichts"},
+                    {"valueString": "0Nein"},
                     {"valueString": "1Wenig"},
-                    {"valueString": "2Viel"}
+                    {"valueString": "2Ja"}
         ]
       },
       {
@@ -44,9 +44,9 @@ json_obj = {
         "text" : "Haben sie heute magnesiumreich gegessen? (Nüsse, Samen, Vollkorn, Hülsenfrüchte)",
         "type": "choice",
         "answerOption": [
-                    {"valueString": "0Nichts"},
-                    {"valueString": "2Wenig"},
-                    {"valueString": "1Viel"}
+                    {"valueString": "0Nein"},
+                    {"valueString": "1Wenig"},
+                    {"valueString": "2Ja"}
         ]
       },
       {

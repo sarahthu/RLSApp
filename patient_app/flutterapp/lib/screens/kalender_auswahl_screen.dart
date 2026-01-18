@@ -1,12 +1,10 @@
-//wird angezeigt wenn auf dem Kalender ein Tag ausgewählt wird
-
 import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
 import 'package:flutterapp/screens/kalender_fresponse_screen.dart';
 import 'package:flutterapp/screens/kalender_tresponse_screen.dart';
 
-class KalenderAuswahlScreen extends StatefulWidget {
-  final String date;
+class KalenderAuswahlScreen extends StatefulWidget {  //wird angezeigt wenn auf dem Kalender ein Tag ausgewählt wird
+  final String date;   //erhält dafür das Datum des ausgewählten Tages (als String)
   KalenderAuswahlScreen({super.key, required this.date});
 
   @override
@@ -31,7 +29,7 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
   }
 
 
-  // holt Fragebogen und Tagebuch Antworten vom Backend 
+  // ----------------- holt Fragebogen und Tagebuch Antworten vom Backend ----------------------------------------------------------
   get_responses() async {
     final fresponse = await dio.get("/rls/getresponse/${widget.date.substring(0,10)}");
     if (fresponse.statusCode == 200) {
@@ -54,13 +52,14 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
     }
 
     if (fragebogenGeladen && tagebuchGeladen) {
-      isLoading = false;
+      isLoading = false;  // wenn sowohl Fragebogen als auch TagebuchAntworten erfolgreich geladen wurden, wird isLoading auf false gesetzt
     }
   }
 
+  // ------------- Build Methode --------------------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (isLoading) {   // Zeigt Ladebildschirm solange Seite läd
       return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -72,7 +71,7 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
       );
     }
 
-    return Scaffold(
+    return Scaffold(  // Zeigt Liste mit Fragebogen- und Tagebuch-Antworten
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(title()),
@@ -94,13 +93,13 @@ class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
 }
 
 
-
+// ------------------------ baut eine Liste aller Fragebogen-Antworten ---------------------------------------------------------
 Widget buildfresponselist(List fragebogen_items){ 
   if (fragebogen_items.isEmpty) { 
     return Column(
       children: [
         SizedBox(height: 10,),
-        Center(child: Text("An diesem Tag haben Sie keine Fragebögen ausgefüllt", style: TextStyle(fontSize: 20),)),
+        Center(child: Text("An diesem Tag haben Sie keine Fragebögen ausgefüllt", style: TextStyle(fontSize: 20),)), // wird angezeigt wenn keine Fragebogen-Antworten vorliegen
       ],
     ); 
   } 
@@ -110,7 +109,7 @@ Widget buildfresponselist(List fragebogen_items){
       itemCount: fragebogen_items.length, 
       itemBuilder: (context, index) { 
         return GestureDetector( onTap: () { 
-          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf FragebogenScreen, mit Zurückknopf 
+          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalenderfResponseScreen, mit Zurückknopf 
           return KalenderfResponseScreen(responsejson: fragebogen_items[index],
           ); 
         })); 
@@ -128,12 +127,13 @@ Widget buildfresponselist(List fragebogen_items){
   }
 
 
+  // ------------------ baut eine Liste aller Tagebuch-Antworten --------------------------------------------------------------------
   Widget buildtresponselist(List tagebuch_items){ 
   if (tagebuch_items.isEmpty) { 
     return Column(
       children: [
         SizedBox(height: 10,),
-        Center(child: Text("An diesem Tag haben Sie keine Tagebucheinträge gemacht", style: TextStyle(fontSize: 20),)),
+        Center(child: Text("An diesem Tag haben Sie keine Tagebucheinträge gemacht", style: TextStyle(fontSize: 20),)),  // Wird angezeigt wenn keine Fragebogen Antworten vorliegen
       ],
     ); 
   } 
@@ -143,11 +143,11 @@ Widget buildfresponselist(List fragebogen_items){
       itemCount: tagebuch_items.length, 
       itemBuilder: (context, index) { 
         return GestureDetector( onTap: () { 
-          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf FragebogenScreen, mit Zurückknopf 
+          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalendertresponseScreen, mit Zurückknopf 
           return KalendertResponseScreen(responsejson: tagebuch_items[index],); 
         })); 
       }, 
-      child: Card( 
+      child: Card(    // auf jeder Tagebuch-Antwort Karte wird die Kategorie als farbiger CircleAvatar mit Icon angzeigt
         child: ListTile( 
           leading: getCircleAvatar(tagebuch_items[index]["questionnaireid"]),
           title: Text(tagebuch_items[index]["questionnairetitle"]), 
@@ -160,6 +160,7 @@ Widget buildfresponselist(List fragebogen_items){
     }
   }
 
+  // ---------------------- erstellt für jede Kategorie den richtigen CircleAvatar -----------------------------------------------------------
   CircleAvatar getCircleAvatar(id) {
     if (id == "tschlaf") {
       return CircleAvatar(
@@ -170,13 +171,13 @@ Widget buildfresponselist(List fragebogen_items){
         if (id == "tsport") {
       return CircleAvatar(
                           backgroundColor: Colors.orange,
-                          child: Icon(Icons.sports_handball_rounded),
+                          child: Icon(Icons.directions_run),
       );
     }
         if (id == "ternaehrung") {
       return CircleAvatar(
                           backgroundColor: Colors.yellow,
-                          child: Icon(Icons.dining_outlined),
+                          child: Icon(Icons.restaurant),
       );
     }
         if (id == "twohlbefinden") {
@@ -193,72 +194,3 @@ Widget buildfresponselist(List fragebogen_items){
 
   }
 
-
-
-  Widget tagebuchbuttons(){
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Center(
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(20),
-                    backgroundColor: Colors.blueAccent, // <-- Button color
-                  ),
-                  child: Icon(Icons.nights_stay_rounded, color: Colors.black, size: 40),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(20),
-                    backgroundColor: Colors.green, // <-- Button color
-                  ),
-                  child: Icon(Icons.dining_outlined, color: Colors.black, size: 40),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(20),
-                    backgroundColor: Colors.orange, // <-- Button color
-                  ),
-                  child: Icon(Icons.sports_handball_rounded, color: Colors.black, size: 40),
-                ),
-              ],
-            ),
-            SizedBox(height:5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(20),
-                    backgroundColor: Colors.pinkAccent, // <-- Button color
-                  ),
-                  child: Icon(Icons.favorite_outline_sharp, color: Colors.black, size: 40),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(20),
-                    backgroundColor: Colors.yellow, // <-- Button color
-                  ),
-                  child: Icon(Icons.spa_outlined, color: Colors.black, size: 40),
-                ),
-              ],
-            ),
-          ],
-        )
-      ),
-    );
-  }

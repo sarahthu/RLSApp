@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class KalendertResponseScreen extends StatefulWidget {
-  final Map<String, dynamic>? responsejson;
+class KalendertResponseScreen extends StatefulWidget {  //zeigt eine bestimmte Tagebuch-Antwort an, die bei einem Kalendertag-Screen ausgeählt wurde
+  final Map<String, dynamic>? responsejson;  //erhält dafür eine JSON die alle Daten zu der Tagebuch-Antwort enthält
   const KalendertResponseScreen({super.key, required this.responsejson});
 
   @override
@@ -10,10 +10,8 @@ class KalendertResponseScreen extends StatefulWidget {
 
 class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
   final String title = "Tagebucheintrag Details";
-  // Datum von der Questionnaireresponse Ressource in die richtige Zeitzone
-  //DateTime get parsedDate => DateTime.parse(widget.responsejson?["date"]);   //converts "date" from the jsonresponse into a DateTime variable
-  //String get localdateString => parsedDate.toLocal().toString();  //changes Date to local timezone and converts it back into String
 
+  // -------------------------------- Build Methode ------------------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,23 +19,24 @@ class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(title),
       ),
-      body: ListView(
+      body: ListView(  // macht eine scrollbare Liste
           children: [
             Column(
               children: [
+                // ----------------------------- Abschnitt für allgemeine Infos über den Fragebogen ----------------------------------------------
                 SizedBox(height: 10,),
-                Text("Kategorie: ${widget.responsejson?["questionnairetitle"]}", style: TextStyle(fontSize: 20),),
-                Text("ausgefüllt am ${widget.responsejson?["date"].substring(0,10)}, um ${widget.responsejson?["date"].substring(11,16)} Uhr", style: TextStyle(fontSize: 15),),
+                Text("${widget.responsejson?["questionnairetitle"]}", style: TextStyle(fontSize: 20),),  // zeigt Titel des Fragebogens
+                Text("ausgefüllt am ${widget.responsejson?["date"].substring(0,10)}, um ${widget.responsejson?["date"].substring(11,16)} Uhr", style: TextStyle(fontSize: 15),), // Datum und Uhrzeit
                 SizedBox(height: 10,),
-                Card(
+                Card(  // grüne Karte die den Score darstellt
                   color: Theme.of(context).colorScheme.inversePrimary,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text("Erzielter Score: ${widget.responsejson?["score"]} / ${widget.responsejson?["maxscore"]}", style: TextStyle(fontSize: 20),),
+                    child: Text("Score: ${widget.responsejson?["score"]} / ${widget.responsejson?["maxscore"]}", style: TextStyle(fontSize: 20),),
                   ),
                 ),
                 SizedBox(height: 5,),
-                Card(
+                Card(  // grüne Karte die die Score Interpretation darstellt
                   color: Theme.of(context).colorScheme.inversePrimary,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -46,10 +45,11 @@ class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
                 ),
               ],
             ),
-            Divider(),
+            Divider(),  // Trennstrich
+            // ------------------------- Abschnitt für Fragen + Antworten ---------------------------------------------------------
             SizedBox(height:10),
             Center(child: Text("Antworten:", style: TextStyle(fontSize: 20),)),
-            ListView.builder(
+            ListView.builder(   // generiert eine Liste mit allen Fragebogen-Fragen und den Antworten
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(), //macht die kleine 2te Listview nicht-scrollable
                   itemCount: widget.responsejson?["questions"].length,
@@ -65,17 +65,18 @@ class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
                   }
             ),
             SizedBox(height:10),
-            Divider(),
+            Divider(),  // Trennstrich
+            // --------------------------- Abschnitt für Tagebucheinträge ---------------------------------------------------
             SizedBox(height:10),
             Center(child: Text("Tagebucheinträge:", style: TextStyle(fontSize: 20),)),
             SizedBox(height: 10,),
             ListTile(
-              title: Text("öffentlich:", style: TextStyle(fontSize: 15,),),
+              title: Text("öffentlich:", style: TextStyle(fontSize: 15,),),   // ListTile für öffentliche Einträge
               subtitle: formatiereEntry(widget.responsejson?["publicentry"]),
             ),
             SizedBox(height:5),
             ListTile(
-              title: Text("privat:", style: TextStyle(fontSize: 15),),
+              title: Text("privat:", style: TextStyle(fontSize: 15),),    // ListTile für private Einträge
               subtitle: formatiereEntry(widget.responsejson?["privateentry"]),
             ),
           ],
@@ -84,6 +85,9 @@ class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
   }
 }
 
+
+// --------------------------- Methode die Einträge formattiert-------------------------------------------------------
+// (gibt Eintrag zurück, falls ein Eintrag vorhnaden ist, "Kein Tagebucheintrag vorhanden" wenn nicht)
 Widget formatiereEntry(text) {
   if (text == "null") {
     return Text("Kein Tagebucheintrag vorhanden", style: TextStyle(color: Colors.grey[500]),);

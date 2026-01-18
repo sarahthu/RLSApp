@@ -28,43 +28,55 @@ class DiagrammPunkt {
   }
 }
 
-// Holt Diagrammdaten von Django
+// -------------------- Holt Diagrammdaten von Django --------------------------------------------------------------
 Future<List<DiagrammPunkt>> lade_diagrammdaten(String fragebogenId) async {
-  List diagramm_items = [];  
-  final response = await dio.get("/rls/diagramm/$fragebogenId");
-    if (response.statusCode == 200) {
-      diagramm_items = response.data;
+  List diagramm_items = [];  //leere Liste diagrammitems
+  final response = await dio.get("/rls/diagramm/$fragebogenId"); //get request an Django
+    if (response.statusCode == 200) {  //Wenn Request erfolgreich....
+      diagramm_items = response.data;  //speichert Daten von Django in Liste
     } else {
       print('Fehler beim Laden der Diagrammdaten');
   }
-  print("HALLO");
-  print(diagramm_items);
+  // Nutzt Diagrammpunkt factory um aus den Daten in der Liste Diagrammpunkte zu machen
   final points = diagramm_items.map((e) => DiagrammPunkt.fromJson(e as Map<String,dynamic>)).toList();
+  // gibt die Diagrammpunkte zurück
   return points;
 }
 
 
-//KPI-BERECHNUNG: Durchschnitt der letzten 7 Kalendertage
-double avgLast7Days(List<DiagrammPunkt> points) {
+//gibt den Score des aktuellsten ausgefüllten Fragebogens zurück
+double neuesterScore(List<DiagrammPunkt> points) {
   if (points.isEmpty) return 0;
-
-  final now = DateTime.now();
-
-  // Start: heute minus 6 Tage (inkl. heute = 7 Tage insgesamt)
-  final startOfWeek = DateTime(now.year, now.month, now.day)
-      .subtract(const Duration(days: 6));
-
-  // Filter: nur Einträge innerhalb der letzten 7 Tage
-  final weekPoints = points
-      .where((p) => !p.datetime.isBefore(startOfWeek) && !p.datetime.isAfter(now))
-      .toList();
-
-  if (weekPoints.isEmpty) return 0;
-
-  final sum = weekPoints.fold<double>(0, (acc, p) => acc + p.score);
-  return sum / weekPoints.length;
+  return points.first.score;
 }
 
+//Fasst mehrere Einträge eines Tages zu einem Tagesdurchschnitt zusammen
+List<DiagrammPunkt> aggregateDailyAverage(List<DiagrammPunkt> points) {
+  final Map<DateTime, List<DiagrammPunkt>> grouped = {};
+  // Einträge nach Kalendertag gruppieren 
+  for (final p in points) {
+    final day = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
+    grouped.putIfAbsent(day, () => []).add(p);
+  }
+  // Für jeden Tag einen Durchschnittspunkt erzeugen
+  final dailyPoints = grouped.entries.map((entry) {
+    final day = entry.key;
+    final list = entry.value;
+
+    final avg =
+        list.fold<double>(0, (sum, p) => sum + p.score) / list.length;
+
+    return DiagrammPunkt(
+      datetime: day,
+      score: avg,
+      interpretation: 'Ø Tageswert (${list.length} Einträge)',
+      maxScore: list.first.maxScore,
+    );
+  }).toList();
+//sortieren
+  dailyPoints.sort((a, b) => a.datetime.compareTo(b.datetime));
+  return dailyPoints;
+}
 //SCREEN: Tabs + KPI-Zeile oben
 
 class AuswertungFragebogenScreen extends StatelessWidget {
@@ -80,7 +92,7 @@ class AuswertungFragebogenScreen extends StatelessWidget {
             return [
               // Obere Leiste + Tabs
               SliverAppBar(
-                title: const Text('Ihre Daten im Überblick'),
+                title: const Text('Fragebogendaten im Überblick'),
                 backgroundColor: Theme.of(context).colorScheme.inversePrimary,
                 pinned: true,
                 floating: true,
@@ -106,8 +118,8 @@ class AuswertungFragebogenScreen extends StatelessWidget {
           // Inhalte der Tabs: pro Kategorie wird lade_diagrammdaten(id) aufgerufen
           body: const TabBarView(
             children: [
-              EvaluationTab(title: 'IRLS', fragebogenId: 'f1'),
-              EvaluationTab(title: 'RLSQoL', fragebogenId: 'f2'),
+              EvaluationTab(title: 'International RLS Scale', fragebogenId: 'f1'),
+              EvaluationTab(title: 'RLS Quality of Life', fragebogenId: 'f2'),
             ],
           ),
         ),
@@ -116,27 +128,27 @@ class AuswertungFragebogenScreen extends StatelessWidget {
   }
 }
 
-//KPI-ROW: lädt Daten und zeigt Durchschnitt
+//KPI-ROW: lädt Daten und zeigt neuesten Score für jeden Fragebogen
 class KpiRow extends StatelessWidget {
   const KpiRow({super.key});
 
   /// Lädt die Daten und berechnet KPI-Strings
   Future<Map<String, String>> _loadKpis() async {
     // Daten aus Backend holen (über lade_diagrammdaten)
-    final irls = await lade_diagrammdaten('f1');
-    final rlsqol = await lade_diagrammdaten('f2');
+    final irlsdaten = await lade_diagrammdaten('f1');
+    final rlsqoldaten = await lade_diagrammdaten('f2'); 
 
-    // Durchschnitt der letzten 7 Tage berechnen
-    final irlsAvg = avgLast7Days(irls);
-    final rlsqolAvg = avgLast7Days(rlsqol);
+    // Neuesten Score für jeden Fragebogen holen
+    final irlsdatenNeuester = neuesterScore(irlsdaten);
+    final rlsqoldatenNeuester = neuesterScore(rlsqoldaten);
 
     // MaxScore (für Anzeige "x / max")
-    final irlsMax = irls.isNotEmpty ? irls.first.maxScore : 5.0;
-    final rlsqolMax = rlsqol.isNotEmpty ? rlsqol.first.maxScore : 5.0;
+    final irlsdatenMax = irlsdaten.isNotEmpty ? irlsdaten.first.maxScore : 5.0;
+    final rlsqoldatenMax = rlsqoldaten.isNotEmpty ? rlsqoldaten.first.maxScore : 5.0;
 
     return {
-      'irls': '${irlsAvg.toStringAsFixed(1)} / ${irlsMax.toStringAsFixed(0)}',
-      'rlsqol': '${rlsqolAvg.toStringAsFixed(1)} / ${rlsqolMax.toStringAsFixed(0)}',
+      'irlsdaten': '${irlsdatenNeuester.toStringAsFixed(1)} / ${irlsdatenMax.toStringAsFixed(0)}',
+      'rlsqoldaten': '${rlsqoldatenNeuester.toStringAsFixed(1)} / ${rlsqoldatenMax.toStringAsFixed(0)}',
     };
   }
 
@@ -166,21 +178,27 @@ class KpiRow extends StatelessWidget {
 
         // Werte anzeigen
         final data = snapshot.data ?? {};
-        final irlsText = data['irls'] ?? '—';
-        final rlsqolText = data['rlsqol'] ?? '—';
+        final irlsdatenText = data['irlsdaten'] ?? '—';
+        final rlsqoldatenText = data['rlsqoldaten'] ?? '—';
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 6,
-            mainAxisSpacing: 6,
-            childAspectRatio: 1.3,
+          child: Column(
             children: [
-              KpiCard(title: 'IRLS', value: irlsText, icon: Icons.edit_note),
-              KpiCard(title: 'RLSQoL', value: rlsqolText, icon: Icons.edit_note),
+              Container(
+                child: GridView.count(
+                  shrinkWrap: true, //Reihe mit den Karten darf nur so hoch werden wie ihr Inhalt
+                  crossAxisCount: 2, 
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                  children: [
+                    KpiCard(title: 'IRLS', value: irlsdatenText),
+                    KpiCard(title: 'RLSQoL', value: rlsqoldatenText),
+                  ],
+                ),
+              ),
+              Text("(Score des letzten ausgefüllten Fragebogens)",)
             ],
           ),
         );
@@ -193,13 +211,11 @@ class KpiRow extends StatelessWidget {
 class KpiCard extends StatelessWidget {
   final String title;
   final String value;
-  final IconData icon;
 
   const KpiCard({
     super.key,
     required this.title,
     required this.value,
-    required this.icon,
   });
 
   @override
@@ -211,16 +227,14 @@ class KpiCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
             Text(
               title,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -267,12 +281,23 @@ class EvaluationTab extends StatelessWidget {
         // Sortierung nach Datum
         points.sort((a, b) => a.datetime.compareTo(b.datetime));
 
-        // Datenpunkte fürs Diagramm:
-        // x = Index (0,1,2,...), y = Score
-        final spots = List.generate(
-          points.length,
-          (i) => FlSpot(i.toDouble(), points[i].score),
+        final dailyPoints = aggregateDailyAverage(points);
+        // Startdatum fürs Diagramm (erstes Tagesdatum)
+        final start = DateTime(
+          dailyPoints.first.datetime.year,
+          dailyPoints.first.datetime.month,
+          dailyPoints.first.datetime.day,
         );
+        // Spots: X = Tage seit Start, Y = Tagesdurchschnitt
+        final spots = dailyPoints.map((p) {
+          final d = DateTime(p.datetime.year, p.datetime.month, p.datetime.day);
+          final x = d.difference(start).inDays.toDouble();
+          return FlSpot(x, p.score);
+          }).toList();
+
+        // Für Achse: minX/maxX setzen
+          final minX = spots.first.x;
+          final maxX = spots.last.x;
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -281,18 +306,84 @@ class EvaluationTab extends StatelessWidget {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
 
-            // Diagramm
+            // --------------------- Diagramm Erstellung ----------------------------------------------------
             SizedBox(
               height: 220,
               child: LineChart(
                 LineChartData(
+                  minX: minX,          
+                  maxX: maxX,
                   minY: 0,
                   maxY: maxScore,
                   gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(show: true),
+                  titlesData: FlTitlesData(
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 10,  //zeigt auf y-Achse für Fragebögen nur jeden 10ten Score Wert (damit y-Achse nicht so voll wird)
+                        reservedSize: 35,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 2, // zeigt nur von jedem 2ten Tag das Datum auf der x-Achse
+                        reservedSize: 30,
+                        getTitlesWidget: (value, meta) {
+                          final startDate = DateTime(
+                            dailyPoints.first.datetime.year,
+                            dailyPoints.first.datetime.month,
+                            dailyPoints.first.datetime.day,
+                          );
+
+                          final date = startDate.add(Duration(days: value.toInt()));
+                          final label =
+                              '${date.day.toString().padLeft(2, '0')}.'
+                              '${date.month.toString().padLeft(2, '0')}';
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              label,
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                   borderData: FlBorderData(show: false),
+                  lineTouchData: LineTouchData(    // Einstellungen wenn der Nutzer einen Punkt auf dem Diagramm anklickt....
+                    touchTooltipData: LineTouchTooltipData(
+                      maxContentWidth: 100,
+                      tooltipBgColor: Theme.of(context).colorScheme.inversePrimary,   //Zeigt ein Feld mit hellgrünem Hintergrund
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((LineBarSpot touchedSpot) {
+                          return LineTooltipItem(
+                            'Score: ${touchedSpot.y.toStringAsFixed(2)}',    // Test des Felds ist "Score: [Scorewert]"
+                            TextStyle(fontSize: 14,),
+                          );
+                        }).toList();
+                      },
+                    ),
+                    handleBuiltInTouches: true,
+                    getTouchLineStart: (data, index) => 0,
+                  ),
                   lineBarsData: [
                     LineChartBarData(
+                      gradient: LinearGradient(  //Farbe der Linie (Farbverlauf)
+                        colors: [
+                          Theme.of(context).colorScheme.inversePrimary,
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.primary,
+                        ],
+                      ),
                       isCurved: true,
                       barWidth: 3,
                       dotData: FlDotData(show: true),
@@ -308,8 +399,8 @@ class EvaluationTab extends StatelessWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
-            // Liste unter dem Diagramm
-            ...points.map((p) {
+            // Liste unter dem Diagramm:
+            ...points.reversed.map((p) {   // geht Diagrammpunkte so herum durch dass der neueste Eintrag in der Liste oben steht
               final d = p.datetime;
               final dateText =
                   '${d.day.toString().padLeft(2, '0')}.'

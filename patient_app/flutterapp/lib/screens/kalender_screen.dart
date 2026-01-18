@@ -13,6 +13,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
   DateTime _focusedDay = DateTime.now();  //Variable focusedDay mit initialem Wert DateTime.now()
   DateTime? _selectedDay;  //Variable selectedDay. ? = kann null sein
 
+  // ------------------------------ Build Methode -------------------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +38,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
 
             String datestring = selectedDay.toIso8601String();  //Variable datestring speichert Datum des ausgewählten Tages als String
             
-            Navigator.push(    //Navigiert zum KalenderAuswahlScreen, übergibt datestring
+            Navigator.push(    //Navigiert zum KalenderAuswahlScreen, übergibt datestring (String Variable mit dem ausgewählten Tag)
               context, 
               MaterialPageRoute(
                 builder: (context) {

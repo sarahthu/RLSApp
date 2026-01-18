@@ -16,20 +16,20 @@ class FragebogenScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,   //Buttons werden mittig in der Column angezeigt
           children: [
-            ElevatedButton.icon(    //Knopf zur Fragebogen Seite
+            ElevatedButton.icon(    //Knopf zum IRLS Screen
               icon: Icon(Icons.edit_note),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf FragebogenScreen, mit Zurückknopf
+                Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf IRLS Screen, mit Zurückknopf
                   return IRLSScreen();
                 }));
               },
               label: const Text('Fragebogen 1 (IRLS)', style: TextStyle(fontSize: 25),),
             ),
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
-            ElevatedButton.icon(   //Knopf zur Tagebuch Seite
+            ElevatedButton.icon(   //Knopf zum RLSQoL Screen
               icon: Icon(Icons.edit_note),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf TagebuchScreen, mit Zurückknopf
+                Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf RLSQoL Screen, mit Zurückknopf
                   return RLSQOLScreen();
                 }));
               },

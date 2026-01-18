@@ -4,6 +4,7 @@ import 'package:flutterapp/screens/tagebuch_auswahl_screen.dart';
 class TagebuchScreen extends StatelessWidget {
   final String title = "Tagebuch";
 
+  // ------------------------------ Build Methode (für ListView mit mehreren Cards) ----------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,7 +16,7 @@ class TagebuchScreen extends StatelessWidget {
         padding: const EdgeInsets.all(15),
         child: ListView(
           children: <Widget>[
-            Card(
+            Card(     //Karte zum Weiterleiten auf die Schlaf-Fragen; übergibt dafür dem TagebuchAuswahlScreen den Titel des es haben soll + die ID des Schlaf-Fragebogens auf dem FHIR Server
               child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.blueAccent,
@@ -24,41 +25,41 @@ class TagebuchScreen extends StatelessWidget {
                         title: Text("Schlaf"),
                         subtitle: Text("Am besten morgens ausfüllen"),
                         onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
+                        Navigator.push(context, MaterialPageRoute(builder: (context) {
                           return TagebuchAuswahlScreen(id :"tschlaf", title: "Schlaf");
                         }));
                       }
               )
             ),
-            Card(
+            Card(     //Karte zum Weiterleiten auf die Ernährungs-Fragen; übergibt dafür dem TagebuchAuswahlScreen den Titel des es haben soll + die ID des Ernährungs-Fragebogens auf dem FHIR Server
               child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.yellow,
-                          child: Icon(Icons.dining_outlined),
+                          child: Icon(Icons.restaurant),
                         ),
                         title: Text("Ernährung"),
                         onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
+                        Navigator.push(context, MaterialPageRoute(builder: (context) {   
                           return TagebuchAuswahlScreen(id :"ternaehrung", title: "Ernährung");
                         }));
                       }
               )
             ),
-            Card(
+            Card(     //Karte zum Weiterleiten auf die Sport-Fragen; übergibt dafür dem TagebuchAuswahlScreen den Titel des es haben soll + die ID des Sport-Fragebogens auf dem FHIR Server
               child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.orange,
-                          child: Icon(Icons.sports_handball_rounded),
+                          child: Icon(Icons.directions_run),
                         ),
                         title: Text("Sport & Bewegung"),
                         onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf AuswertungenScreen, mit Zurückknopf
+                        Navigator.push(context, MaterialPageRoute(builder: (context) {  
                           return TagebuchAuswahlScreen(id :"tsport", title: "Sport & Bewegung");
                         }));
                       }
               )
             ),
-            Card(
+            Card(   //Karte zum Weiterleiten auf die Wohlbefinden-Fragen; übergibt dafür dem TagebuchAuswahlScreen den Titel des es haben soll + die ID des Wohlbefinden-Fragebogens auf dem FHIR Server
               child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.pinkAccent,

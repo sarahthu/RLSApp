@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/dio_setup.dart';
 
 
-class TagebuchAuswahlScreen extends StatefulWidget {
+class TagebuchAuswahlScreen extends StatefulWidget {   //Stellt auf einer Seite mit gegebenem Titel "title" den Fragebogen mit der gegebenen ID "id" dar
   final dynamic title;
   final dynamic id;
   const TagebuchAuswahlScreen({super.key, required this.title, required this.id});
@@ -12,10 +12,10 @@ class TagebuchAuswahlScreen extends StatefulWidget {
 }
 
 class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
-  get id => widget.id;
+  get id => widget.id;   //holt Titel und ID des Widgets
   get title => widget.title;
   Map<String, dynamic>? questionnaire; // Speichert Antworten pro Frage
-  final Map<String, String> answers = {};
+  final Map<String, String> answers = {};  //leere Map in der später Fragebogen-Antworten gespeichert werden
   bool loading = true; //True solange Daten geladen werden
   String? error; //Fehlertext, falls etwas schiefgeht
   Map<String, dynamic>? djangotagebuchresponse; //Speichert die Antwort die vom Backend nach Speichern des Fragebogens zurückkommt
@@ -101,25 +101,25 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
       "authored" : "${date.toLocal().toIso8601String()}+0${date.timeZoneOffset.toString().substring(0,4)}", //speichert Datum im YYYY-MM-DDThh:mm:ss.sss+zz:zz Format, wie von FHIR vorgegeben
       "item": [
         {
-          "linkId": "0.1",
+          "linkId": "0.1",       //Platzhalter für Score (wird vom Backend eingefügt)
           "valueInteger": null
         },
                 {
-          "linkId": "0.2",
+          "linkId": "0.2",       //Platzhalter für Score Interpretation (wird vom Backend eingefügt)
           "valueString": "null"
         },
         {
-          "linkId": "1",
+          "linkId": "1",   //speichert Liste der Antworten unter linkID 1
           "item": items
         },
         {
           "linkId": "2",
           "item" : [{
-            "linkId" : "2.1",
+            "linkId" : "2.1",       //speichert öffentliche Tagebucheinträge unter linkID 2.1
             "text" : publicdiaryentry,
           },
           {
-            "linkId" : "2.2",
+            "linkId" : "2.2",    //speichert private Tagebucheinträge unter linkID 2.2
             "text" : privatediaryentry,
           }]
         }
@@ -134,8 +134,8 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
       if (resp.statusCode == 200) {
           //wenn Fragebogen erfolgreich gesendet und eine Antwort vom Backend erhalten wurde
           djangotagebuchresponse = resp.data;
-          score = djangotagebuchresponse?["score"];
-          interpretation = djangotagebuchresponse?["interpretation"];
+          score = djangotagebuchresponse?["score"];   //Score aus der Antwort wird in Variable score gepeichert
+          interpretation = djangotagebuchresponse?["interpretation"]; //Interpretation aus der Antwort wird in Variable interpretation gespeichert
 
       }
 
@@ -182,7 +182,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
   }
 
 
-
+  // ------------------------------- Build Methode ------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -219,12 +219,12 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
               children: [
                 Text("Öffentliche Tagebucheinträge", style: TextStyle(fontWeight: FontWeight.bold),),
                 SizedBox(height:5),
-                TextField(    //Eingabefeld für das Passwort
+                TextField(    //Eingabefeld für öffentliche Einträge
                     controller: publicController,   //Eingaben werden über den publicController überwacht
                     minLines: 4,
                     maxLines: 10,
                     decoration: InputDecoration(
-                      hintText: 'Auf Einträge in diesem Feld kann Ihr Arzt auch zugreifen',
+                      hintText: 'Auf Einträge in diesem Feld kann Ihr Arzt auch zugreifen',  //HintText; steht anfangs auf dem Textfeld und geht weg sobald man das Feld anklickt
                       border: OutlineInputBorder(),
                     ),
                 ),
@@ -238,12 +238,12 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
               children: [
                 Text("Private Tagebucheinträge", style: TextStyle(fontWeight: FontWeight.bold),),
                 SizedBox(height:3),
-                TextField(    //Eingabefeld für das Passwort
+                TextField(    //Eingabefeld für private Einträge
                     controller: privateController,   //Eingaben werden über den privateController überwacht
                     minLines: 4,
                     maxLines: 10,
                     decoration: InputDecoration(
-                      hintText: 'Auf Einträge in diesem Feld können nur Sie zugreifen',
+                      hintText: 'Auf Einträge in diesem Feld können nur Sie zugreifen', //HintText; steht anfangs auf dem Textfeld und geht weg sobald man das Feld anklickt
                       border: OutlineInputBorder(),
                     ),
                 ),
@@ -264,7 +264,7 @@ class _TagebuchAuswahlScreenState extends State<TagebuchAuswahlScreen> {
     );
   }
 
-  //Baut passende Eingabefeld
+  // ------------------------ Methode die Eingabefeld für die Choice-Fragen baut --------------------------------------------
   Widget _buildQuestionItem(Map<String, dynamic> item) {
     final linkId = item["linkId"];
     final text = item["text"];

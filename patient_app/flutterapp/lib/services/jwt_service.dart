@@ -13,7 +13,7 @@ class JwtService {
 
   //--------- Method um Tokens aus dem SecureStorage zu holen --------------------------------------------
   Future<String?> getToken() async {
-    final tokenString = await _storage.read(key: 'jwt'); //halt Token als String aus securestorage
+    final tokenString = await _storage.read(key: 'jwt'); //holt Token als String aus securestorage
     if (tokenString != null){
       final Map<String, dynamic> tokenJson = jsonDecode(tokenString); //konvertiert den String in eine JSON
       return tokenJson["access"]; //gibt von dieser Json das element mit dem key "access" = das access token zurück
@@ -32,7 +32,7 @@ class JwtService {
   Future<bool> login(String username, String password) async {
     try {
       final response = await dio.post("/token/",   //verwendet dio das in dio_setup erstellt wurde
-        data: {'username': username, 'password': password},
+        data: {'username': username, 'password': password},  // sendet username und password an Django
       );
 
       if (response.statusCode == 200) {
@@ -43,33 +43,27 @@ class JwtService {
           return true;
         }
       }
-    } catch (e) {
+    } catch (e) {     // Catch wenn Einloggen schiefgeht
       print('Login error: $e');
     }
     return false;
   }
 
-  //--------- Method für Registrierung von neuen Benutzern --------------------------------------------
+  //--------- Methode für Registrierung von neuen Benutzern --------------------------------------------
   Future<bool> signup(String username, String password) async {
     try {
       final response = await dio.post("/register/",
-            data: {"username": username, "password": password},
+            data: {"username": username, "password": password}, // sendet username und password an Django
       );
 
-      if (response.statusCode == 201) {
-        final resp = response.data; // Ensure this matches your API response
+      if (response.statusCode == 201) { //Wenn User erfolgreich registriert wurde
+        final resp = response.data; 
         if (resp != null) {
-          return true;
+          return true;  // wird true zurückgegeben
         }
       }
 
-      if (response.statusCode == 400) {
-        final resp = response.data; // Ensure this matches your API response
-        if (resp != null) {
-          return true;
-        }
-      }
-    } on DioException catch (e) {
+    } on DioException catch (e) {   // Catch wenn Registrierung schiefgeht
       if (e.response != null) {
         // Fehlertext vom Backend
         print('Status: ${e.response!.statusCode}');

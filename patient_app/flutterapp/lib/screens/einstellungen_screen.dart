@@ -26,7 +26,7 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
     loadPorfile();  //Beim Start Profildaten laden
   }
 
-  //---------------Fragebogen vom Django Server laden--------------------------------------------------
+  //-------------------- Profildaten vom Django Server laden------------------------------------------------------
   Future<void> loadPorfile() async {
     try {
       final resp = await dio.get("/rls/profil/");
@@ -74,13 +74,13 @@ class _SettingsScreenState extends State<EinstellungenScreen> {
       body: ListView(                       // Liste für alle Einstellungen
         padding: const EdgeInsets.all(16),
         children: [
-          /// ---------------- Profil ----------------
+          /// ------------------ Profil ----------------------
           Card(
             child: ListTile(                // Profil-Icon
               leading: const CircleAvatar(child: Icon(Icons.person)),
               title: const Text('Profil', style: TextStyle(fontWeight: FontWeight.bold),),
-              // subtitle: const Text('Patienteninformationen:'),
-              subtitle: Text("Vorname: ${profil?["vorname"]}\nNachname: ${profil?["nachname"]}\nGebusrtsdatum: ${profil?["geburtsdatum"]}",),
+              // zeigt die vom Backend erhaltenen Patienteninformationen an:
+              subtitle: Text("Vorname: ${profil?["vorname"]}\nNachname: ${profil?["nachname"]}\nGeburtsdatum: ${profil?["geburtsdatum"]}",),
             ),
           ),
 

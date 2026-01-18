@@ -34,7 +34,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
 
 
-#GET
+#GET questionnaire
 @api_view(['GET'])  #Decorator. Macht aus Funktion rls_questionnaire eine API view, bei der nur GET requests möglich sind
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_questionnaire(request, id):
@@ -80,14 +80,14 @@ def post_patient(request):
     })
 
 
-#GET
+#GET Patient
 @api_view(['GET'])  #Decorator. Macht aus Funktion get_patient eine API view, bei der nur GET requests möglich sind
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_patient(request):
     # holt die Daten des angelemeldeten Patienten vom FHIR Server
     response = requests.get(
         server_url + "/Patient/" + request.user.patient_id, 
-        verify=False) #verifizierung deaktiviert da wir ein selbst signiertes zertifikat verwenden
+        verify=False) #verifizierung deaktiviert, da wir ein selbst signiertes zertifikat verwenden
 
     patient_data = response.json()
 
@@ -102,7 +102,7 @@ def get_patient(request):
 
 
 
-#POST: Empfängt Antworten aus Flutter
+#POST: Empfängt Fragebogen- und Tagebuch-Antworten aus Flutter
 @api_view(['POST'])  #Decorator. Macht aus Funktion rls_response eine API view, bei der nur POST requests möglich sind
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def post_response(request):
@@ -170,7 +170,7 @@ def post_response(request):
         "interpretation" : interpret_score(questionnaire_id, score)
     })
 
-
+# GET Fragebogen-Antwort
 @api_view(['GET'])  #Decorator
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_questionnaire_response(request, date):  #Funktion alle RLS QuestionnaireResponses von einem bestimmten Tag zurückgibt
@@ -226,7 +226,7 @@ def get_questionnaire_response(request, date):  #Funktion alle RLS Questionnaire
     return JsonResponse(responses_list, safe=False)  #safe=False allows non-dict objects to be serialized
 
 
-
+# GET Tagebuch-Antwort
 @api_view(['GET'])  #Decorator
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_tagebuch_response(request, date):  #Funktion die alle RLS TagebuchResponses von einem bestimmten Tag (in der Zeitzone Europe/Berlin, mit aktuellem Offset) zurückgibt
@@ -284,7 +284,7 @@ def get_tagebuch_response(request, date):  #Funktion die alle RLS TagebuchRespon
     return JsonResponse(responses_list, safe=False)  #safe=False allows non-dict objects to be serialized
 
 
-
+# GET Daten für Auswertungs-Liniendiagramm
 @api_view(['GET'])  #Decorator
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_diagrammdaten(request, id):  #Funktion die alle Responses für einen einzelnen Fragebogen zurückgibt
@@ -322,7 +322,7 @@ def get_diagrammdaten(request, id):  #Funktion die alle Responses für einen ein
 
 
 
-#----------- Methode für Score Interpretation -----------------------------------------------------------------------------------
+#------------ Methode für Score Interpretation -----------------------------------------------------------------------------------
 
 def interpret_score(questionnaire_id, score): #Methode für Interpreatation der Fragebogen scores
     if questionnaire_id == "f1":  # für den IRLS Fragebogen....

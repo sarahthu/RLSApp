@@ -28,18 +28,18 @@ class DiagrammPunkt {
   }
 }
 
-// Holt Diagrammdaten von Django
+// -------------------- Holt Diagrammdaten von Django --------------------------------------------------------------
 Future<List<DiagrammPunkt>> lade_diagrammdaten(String fragebogenId) async {
-  List diagramm_items = [];  
-  final response = await dio.get("/rls/diagramm/$fragebogenId");
-    if (response.statusCode == 200) {
-      diagramm_items = response.data;
+  List diagramm_items = [];  //leere Liste diagrammitems
+  final response = await dio.get("/rls/diagramm/$fragebogenId"); //get request an Django
+    if (response.statusCode == 200) {  //Wenn Request erfolgreich....
+      diagramm_items = response.data;  //speichert Daten von Django in Liste
     } else {
       print('Fehler beim Laden der Diagrammdaten');
   }
-  print("HALLO");
-  print(diagramm_items);
+  // Nutzt Diagrammpunkt factory um aus den Daten in der Liste Diagrammpunkte zu machen
   final points = diagramm_items.map((e) => DiagrammPunkt.fromJson(e as Map<String,dynamic>)).toList();
+  // gibt die Diagrammpunkte zurück
   return points;
 }
 
@@ -106,7 +106,7 @@ class AuswertungTagebuchScreen extends StatelessWidget {
             return [
               // Obere Leiste + Tabs
               SliverAppBar(
-                title: const Text('Ihre Daten im Überblick'),
+                title: const Text('Tagebuchdaten im Überblick'),
                 backgroundColor: Theme.of(context).colorScheme.inversePrimary,
                 pinned: true,
                 floating: true,
@@ -116,7 +116,7 @@ class AuswertungTagebuchScreen extends StatelessWidget {
                     Tab(text: 'Schlaf'),
                     Tab(text: 'Ernährung'),
                     Tab(text: 'Wohlbefinden'),
-                    Tab(text: 'Sport'),
+                    Tab(text: 'Aktivität'),
                   ],
                 ),
               ),
@@ -125,10 +125,7 @@ class AuswertungTagebuchScreen extends StatelessWidget {
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.only(top: 12),
-                  child: SizedBox(
-                    height: 220, 
-                    child: KpiRow(),
-                  ),
+                  child: KpiRow(),
                 ),
               ),
             ];
@@ -140,7 +137,7 @@ class AuswertungTagebuchScreen extends StatelessWidget {
               EvaluationTab(title: 'Schlaf', fragebogenId: 'tschlaf'),
               EvaluationTab(title: 'Ernährung', fragebogenId: 'ternaehrung'),
               EvaluationTab(title: 'Wohlbefinden', fragebogenId: 'twohlbefinden'),
-              EvaluationTab(title: 'Sport', fragebogenId: 'tsport'),
+              EvaluationTab(title: 'Aktivität', fragebogenId: 'tsport'),
             ],
           ),
         ),
@@ -214,17 +211,24 @@ class KpiRow extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: GridView.count(
-            crossAxisCount: 4, 
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 6,
-            mainAxisSpacing: 6,
-            childAspectRatio: 1.8,
+          child: Column(
             children: [
-              KpiCard(title: 'Schlaf', value: sleepText, icon: Icons.bed),
-              KpiCard(title: 'Ernährung', value: nutritionText, icon: Icons.restaurant),
-              KpiCard(title: 'Wohlbefinden', value: wellbeingText, icon: Icons.mood),
-              KpiCard(title: 'Aktivität', value: sportText, icon: Icons.directions_run),
+              Container(
+                child: GridView.count(
+                  shrinkWrap: true,  //Reihe mit den Karten darf nur so hoch sein wie ihr Inhalt
+                  crossAxisCount: 4, 
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                  children: [
+                    KpiCard(title: 'Schlaf', value: sleepText, icon: Icons.nights_stay_rounded),
+                    KpiCard(title: 'Ernährung', value: nutritionText, icon: Icons.restaurant),
+                    KpiCard(title: 'Wohlbefinden', value: wellbeingText, icon: Icons.favorite_outline_sharp),
+                    KpiCard(title: 'Aktivität', value: sportText, icon: Icons.directions_run),
+                  ],
+                ),
+              ),
+              Text("(Durchschnitts-Scores der letzten 7 Tage)",)
             ],
           ),
         );
@@ -260,11 +264,6 @@ class KpiCard extends StatelessWidget {
             Text(
               value,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
@@ -336,7 +335,7 @@ class EvaluationTab extends StatelessWidget {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
 
-            // Diagramm
+            // ----------------- Diagramm Erstellung -----------------------------------------------------
             SizedBox(
               height: 220,
               child: LineChart(
@@ -353,7 +352,7 @@ class EvaluationTab extends StatelessWidget {
                     rightTitles: AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
-                    leftTitles: AxisTitles(
+                    leftTitles: AxisTitles(    // zeigt auf der y-Achse alle Scorewerte (1-6) an
                       sideTitles: SideTitles(
                         showTitles: true,
                         interval: 1,
@@ -363,7 +362,7 @@ class EvaluationTab extends StatelessWidget {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        interval: 1, // 1 Tag Abstand
+                        interval: 2, // zeigt nur von jedem 2ten Tag das Datum auf der x-Achse
                         reservedSize: 30,
                         getTitlesWidget: (value, meta) {
                           final startDate = DateTime(
@@ -389,8 +388,31 @@ class EvaluationTab extends StatelessWidget {
                     ),
                   ),
                   borderData: FlBorderData(show: false),
+                  lineTouchData: LineTouchData(           // Einstellungen wenn der Nutzer einen Punkt auf dem Diagramm anklickt....
+                    touchTooltipData: LineTouchTooltipData(
+                      maxContentWidth: 100,
+                      tooltipBgColor: Theme.of(context).colorScheme.inversePrimary,  //Zeigt ein Feld mit hellgrünem Hintergrund
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((LineBarSpot touchedSpot) {
+                          return LineTooltipItem(                          // Test des Felds ist "Score: [Scorewert]"
+                            'Score: ${touchedSpot.y.toStringAsFixed(2)}',
+                            TextStyle(fontSize: 14,),
+                          );
+                        }).toList();
+                      },
+                    ),
+                    handleBuiltInTouches: true,
+                    getTouchLineStart: (data, index) => 0,
+                  ),
                   lineBarsData: [
                     LineChartBarData(
+                      gradient: LinearGradient(  //Farbe der Linie (Farbverlauf)
+                        colors: [
+                          Theme.of(context).colorScheme.inversePrimary,
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.primary,
+                        ],
+                      ),
                       isCurved: true,
                       barWidth: 3,
                       dotData: FlDotData(show: true),
@@ -406,8 +428,8 @@ class EvaluationTab extends StatelessWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
-            // Liste unter dem Diagramm
-            ...points.map((p) {
+            // Liste unter dem Diagramm:
+            ...points.reversed.map((p) {   // geht Diagrammpunkte so herum durch dass der neueste in der Liste oben steht
               final d = p.datetime;
               final dateText =
                   '${d.day.toString().padLeft(2, '0')}.'
