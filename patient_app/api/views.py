@@ -293,6 +293,7 @@ def get_diagrammdaten(request, id):  #Funktion die alle Responses für einen ein
 
     responses = requests.get(
         server_url 
+        + "/QuestionnaireResponse/"
         + "?source=Patient/" + request.user.patient_id
         + "&_count=1000", 
         verify=False).json()  #holt die letzten 1000 (oder weniger) Questionnaire_Responses vom gesuchten Patient (dem der die request gemacht hat) im JSON Format vom FHIR Server + macht daraus ein Python Dictionary
@@ -345,10 +346,35 @@ def interpret_score(questionnaire_id, score): #Methode für Interpreatation der 
         if score > 75:
             return "gute Lebensqualität" # score über 75 -> gute Qol
     
-    if questionnaire_id == "tschlaf" or questionnaire_id == "twohlbefinden" or questionnaire_id == "tsport" or questionnaire_id == "ternaehrung":
-        if score <= 5:
-            return "Schelchterer Score"
-        if score > 5:
-            return "Besserer Score"
+    if questionnaire_id == "twohlbefinden": # Interpretation / Feedback-Texte für die Wohlbefinden Fragen....
+        if score <= 2:
+            return "Ihr Wohlbefinden war niedrig. Kleine Pausen und bewusste Entspannung können helfen"
+        if 3 <= score <= 4 :
+            return "Ihr Wohlbefinden war ausgeglichen. Mit etwas mehr Entspannung ist noch Verbesserung möglich"
+        if score > 4:
+            return "Ihr Wohlbefinden war sehr gut. Machen Sie weiter so!"
         
+    if questionnaire_id == "tsport": # Interpretation / Feedback-Texte für die Sport Fragen....
+        if score <= 2:
+            return "Wenig oder ungünstige Bewegung. Schon leichte Aktivität kann hilfreich sein"
+        if 3 <= score <= 4 :
+            return "Ihre Aktivität war in Ordnung. Regelmäßigkeit könnte den Effekt steigern"
+        if score > 4:
+            return "Sehr gute Aktivität! Das unterstützt Körper und Schlaf"
+        
+    if questionnaire_id == "ternaehrung": # Interpretation / Feedback-Texte für die Ernährungs Fragen.....
+        if score <= 2:
+            return "Ihre Ernährung war eher nährstoffarm. Kleine Anpassungen können helfen"
+        if 3 <= score <= 4 :
+            return "Ihr Ernährung war teilweise ausgewogen. Es ist noch Luft nach oben"
+        if score > 4:
+            return "Sehr gute, nährstoffreiche Ernährung. Das wirkt sich positiv aus!"
+        
+    if questionnaire_id == "tschlaf": # Interpretation / Feedback-Texte für die Schlaf Fragen....
+        if score <= 2:
+            return "Ihr Schlaf war eingeschränkt. Kleine Änderungen am Abend können helfen"
+        if 3 <= score <= 4 :
+            return "Ihr Schlaf war durchschnittlich. Mit Routinen lässt er sich verbessern"
+        if score > 4:
+            return "Ihr Schlaf war heute erholsam. Eine gute Grundlage für ihr Wohlbefinden"
         

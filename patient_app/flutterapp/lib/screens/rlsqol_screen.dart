@@ -133,12 +133,12 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     barrierDismissible: false, // Benutzer muss den Knopf drücken um weiter zu kommen
     builder: (BuildContext context) {
       return AlertDialog(
-        title: const Text('Antworten gespeichert!'),  //Titel des Pop-up Fensters
+        title: const Text('Antworten gespeichert!', textAlign: TextAlign.center,),  //Titel des Pop-up Fensters
         content: SingleChildScrollView(
           child: ListBody(
             children: <Widget>[
-              Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20),), //Text des Pop-up Fensters
-              Text(' -> $interpretation'),
+              Text('Ihr Score ist $score/$maxscore!', style: TextStyle(fontSize: 20), textAlign: TextAlign.center,), //Text des Pop-up Fensters
+              Text(' -> $interpretation', textAlign: TextAlign.center,),
             ],
           ),
         ),

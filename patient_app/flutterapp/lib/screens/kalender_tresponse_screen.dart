@@ -40,7 +40,7 @@ class _KalendertResponseScreenState extends State<KalendertResponseScreen> {
                   color: Theme.of(context).colorScheme.inversePrimary,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text("---> ${widget.responsejson?["interpretation"]}", style: TextStyle(fontSize: 20),),
+                    child: Text("---> ${widget.responsejson?["interpretation"]}", style: TextStyle(fontSize: 20,), textAlign: TextAlign.center,),
                   ),
                 ),
               ],
