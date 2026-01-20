@@ -125,6 +125,19 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
   }
 
 
+  // ---------- Methode die testet ob alle Fragen beantwortet sind ------------------------------------
+                
+  bool antwortenVollstaendig(List<dynamic> items) {
+    for (final item in items) {   
+      final linkId = item["linkId"];  // prüft für alle link IDs in items (also für alle Fragen des Fragebogens)...
+      if (!answers.containsKey(linkId)) {  // ...ob die linkID als key in answers (also der Map mit allen gegebenen Antworten als value und ihren linkIDs als key) vorhanden ist 
+        return false; // mindestens eine linkID nicht in answers vorhanden -> mind eine Frage ist nicht beantwortet -> gibt false zurück
+      }
+    }
+    return true; // alle linkIDs sind in answers vorhanden -> alle Fragen beantwortet
+  }        
+
+
 
   //-------------------Pop-Up Fenster das den Score anzeigt----------------------------------------------
   Future<void> showMyDialog() async {
@@ -192,8 +205,15 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
           // Button zum Absenden der Antworten
           ElevatedButton(
             onPressed: () async {
+              if (antwortenVollstaendig(items) == false) { // wenn nicht alle Fragen beantwortet sind...
+                  ScaffoldMessenger.of(context).showSnackBar(  //Nachricht
+                    SnackBar(content: Text('Sie haben einige Fragen nicht beantwortet.\nBitte füllen Sie den Fragebogen vollständig aus.')),
+                  );
+              }
+              else { // sonst (wenn alle Fragen beantwortet sind) ....
                 await sendResponse();  //Button wartet bis sendResponse (Funktion die Antworten zum Django Backend sendet) abgeschlossen ist
                 showMyDialog(); //wenn sendResponse fertig ist (=wenn Score unter int score gespeichert ist), wird Pop Up angezeigt 
+              }
             },
             child: const Text("Antworten senden"),
           ),
@@ -202,7 +222,7 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
     );
   }
 
-  //Baut passende Eingabefeld
+  //-------------- Baut passendes Eingabefeld -------------------------------------------------------
   Widget _buildQuestionItem(Map<String, dynamic> item) {
     final linkId = item["linkId"];
     final text = item["text"];
@@ -231,4 +251,5 @@ class _RLSQOLScreenState extends State<RLSQOLScreen> {
         ],
       );
     }
-}
+}    
+              
