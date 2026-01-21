@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/screens/navbar_layout.dart';
 import 'package:flutterapp/screens/registrierung_screen.dart';
 import 'package:flutterapp/services/jwt_service.dart';
