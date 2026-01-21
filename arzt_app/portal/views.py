@@ -2,13 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from requests import RequestException
-from doctors.fhir_client import fetch_patients
+from portal.fhir_client import fetch_patients
 from django.conf import settings
-from doctors.fhir_client import fetch_questionnaires_for_patient_from_link
-from doctors.fhir_client import fetch_questionnaire_answers_for_patient
+from portal.fhir_client import fetch_questionnaires_for_patient_from_link
+from portal.fhir_client import fetch_questionnaire_answers_for_patient
 from django.conf import settings
-from doctors.fhir_client import (fetch_questionnaire_response_by_id,answers_from_questionnaire_response,fetch_questionnaire_response_summaries_for_patient)
-from doctors.fhir_client import fetch_latest_score_for_patient
+from portal.fhir_client import (fetch_questionnaire_response_by_id,answers_from_questionnaire_response,fetch_questionnaire_response_summaries_for_patient)
+from portal.fhir_client import fetch_latest_score_for_patient
 from django.contrib.auth.decorators import login_required
 
 
