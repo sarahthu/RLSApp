@@ -22,7 +22,4 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', startseite, name='startseite'),  # Startseite: /
     path('home/', home, name='home'),
-    path('dokumentation/', dokumentation, name='dokumentation'),
-    path('einstellungen/', einstellungen, name='einstellungen'),
-    path('profil/', profil, name='profil'),
 ]
