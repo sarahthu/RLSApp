@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/screens/auswertung_screen.dart';
+import 'package:flutterapp/screens/auswertung_nav_screen.dart';
 import 'package:flutterapp/screens/erinnerungen_screen.dart';
-import 'package:flutterapp/screens/fragebogen_screen.dart';
+import 'package:flutterapp/screens/fragebogen_nav_screen.dart';
 import 'package:flutterapp/screens/infos_screen.dart';
 import 'package:flutterapp/screens/sensor_screen.dart';
-import 'package:flutterapp/screens/tagebuch_screen.dart';
+import 'package:flutterapp/screens/tagebuch_nav_screen.dart';
 import 'package:flutterapp/screens/faq_screen.dart';
 
 

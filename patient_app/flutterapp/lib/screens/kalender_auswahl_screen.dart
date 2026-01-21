@@ -1,27 +1,196 @@
-//wird angezeigt wenn auf dem Kalender ein Tag ausgewählt wird
-
 import 'package:flutter/material.dart';
+import 'package:flutterapp/dio_setup.dart';
+import 'package:flutterapp/screens/kalender_fresponse_screen.dart';
+import 'package:flutterapp/screens/kalender_tresponse_screen.dart';
 
-class KalenderAuswahlScreen extends StatelessWidget {
-  final DateTime date;  //Variable für den Tag
-
-  //Konstruktor für KalenderAuswahlScreen: date wird als "required" eingestellt
-  const KalenderAuswahlScreen({super.key, required this.date});
-
-  final String title = "Kalender Tag ausgewählt";
-
+class KalenderAuswahlScreen extends StatefulWidget {  //wird angezeigt wenn auf dem Kalender ein Tag ausgewählt wird
+  final String date;   //erhält dafür das Datum des ausgewählten Tages (als String)
+  KalenderAuswahlScreen({super.key, required this.date});
 
   @override
+  State<KalenderAuswahlScreen> createState() => _KalenderAuswahlScreenState();
+}
+
+class _KalenderAuswahlScreenState extends State<KalenderAuswahlScreen> {
+  String title() => "Kalender Tag ${widget.date.substring(0,10)} ausgewählt";
+  List fragebogen_items = [];  
+  List tagebuch_items = [];  
+
+  String questionnairetitle = "Titel";
+  bool isLoading = true;
+  bool fragebogenGeladen = false;
+  bool tagebuchGeladen = false;
+
+  
+  @override
+  void initState() {
+    super.initState();
+    get_responses();
+  }
+
+
+  // ----------------- holt Fragebogen und Tagebuch Antworten vom Backend ----------------------------------------------------------
+  get_responses() async {
+    final fresponse = await dio.get("/rls/getresponse/${widget.date.substring(0,10)}");
+    if (fresponse.statusCode == 200) {
+      setState(() {
+        fragebogen_items = fresponse.data;
+        fragebogenGeladen = true;
+      });
+    } else {
+      print('Fehler beim Laden der Fragebogen Responses');
+    }
+
+    final tresponse = await dio.get("/rls/gettagebuchresponse/${widget.date.substring(0,10)}");
+    if (tresponse.statusCode == 200) {
+      setState(() {
+        tagebuch_items = tresponse.data;
+        tagebuchGeladen = true;
+      });
+    } else {
+      print('Fehler beim Laden der Tagebuch Responses');
+    }
+
+    if (fragebogenGeladen && tagebuchGeladen) {
+      isLoading = false;  // wenn sowohl Fragebogen als auch TagebuchAntworten erfolgreich geladen wurden, wird isLoading auf false gesetzt
+    }
+  }
+
+  // ------------- Build Methode --------------------------------------------------------------------------------------------
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    if (isLoading) {   // Zeigt Ladebildschirm solange Seite läd
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(title()),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return Scaffold(  // Zeigt Liste mit Fragebogen- und Tagebuch-Antworten
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
+        title: Text(title()),
       ),
-      body: Center(
-        //Text enthält ausgwewähltes Datum im DD.MM.YYYY Format
-        child: Text("Tag ${date.day}.${date.month}.${date.year} ausgewählt. \nHier werden die ausgefüllten Fragebögen für den Tag angezeigt", style: TextStyle(fontSize: 20),)
-      ),
+      body: ListView(
+        children: [
+            SizedBox(height:10),
+            Center(child: Text("Fragebögen:", style: TextStyle(fontSize: 30),)),
+            buildfresponselist(fragebogen_items),
+            SizedBox(height:10),
+            Divider(),
+            SizedBox(height:10),
+            Center(child: Text("Tagebucheinträge:", style: TextStyle(fontSize: 30),)),
+            buildtresponselist(tagebuch_items),
+          ],
+      )
     );
   }
 }
+
+
+// ------------------------ baut eine Liste aller Fragebogen-Antworten ---------------------------------------------------------
+Widget buildfresponselist(List fragebogen_items){ 
+  if (fragebogen_items.isEmpty) { 
+    return Column(
+      children: [
+        SizedBox(height: 10,),
+        Center(child: Text("An diesem Tag haben Sie keine Fragebögen ausgefüllt", style: TextStyle(fontSize: 20),)), // wird angezeigt wenn keine Fragebogen-Antworten vorliegen
+      ],
+    ); 
+  } 
+  else { 
+    return ListView.builder( 
+      shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
+      itemCount: fragebogen_items.length, 
+      itemBuilder: (context, index) { 
+        return GestureDetector( onTap: () { 
+          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalenderfResponseScreen, mit Zurückknopf 
+          return KalenderfResponseScreen(responsejson: fragebogen_items[index],
+          ); 
+        })); 
+      }, 
+      child: Card( 
+        child: ListTile( 
+          title: Text(fragebogen_items[index]["questionnairetitle"]), 
+          subtitle: Text("Score: ${fragebogen_items[index]["score"]} / ${fragebogen_items[index]["maxscore"]}"), 
+        ), 
+      ), 
+      ); 
+      }, 
+      ); 
+    }
+  }
+
+
+  // ------------------ baut eine Liste aller Tagebuch-Antworten --------------------------------------------------------------------
+  Widget buildtresponselist(List tagebuch_items){ 
+  if (tagebuch_items.isEmpty) { 
+    return Column(
+      children: [
+        SizedBox(height: 10,),
+        Center(child: Text("An diesem Tag haben Sie keine Tagebucheinträge gemacht", style: TextStyle(fontSize: 20),)),  // Wird angezeigt wenn keine Fragebogen Antworten vorliegen
+      ],
+    ); 
+  } 
+  else { 
+    return ListView.builder( 
+      shrinkWrap: true, // stellt sicher dass ListView nur den Platz einnimmt den sie braucht -> macht es möglich Listview zusammen mit anderen Widgets in eine Column zu tun
+      itemCount: tagebuch_items.length, 
+      itemBuilder: (context, index) { 
+        return GestureDetector( onTap: () { 
+          Navigator.push(context, MaterialPageRoute(builder: (context) { //Weiterleiten auf KalendertresponseScreen, mit Zurückknopf 
+          return KalendertResponseScreen(responsejson: tagebuch_items[index],); 
+        })); 
+      }, 
+      child: Card(    // auf jeder Tagebuch-Antwort Karte wird die Kategorie als farbiger CircleAvatar mit Icon angzeigt
+        child: ListTile( 
+          leading: getCircleAvatar(tagebuch_items[index]["questionnaireid"]),
+          title: Text(tagebuch_items[index]["questionnairetitle"]), 
+          subtitle: Text("Score: ${tagebuch_items[index]["score"]} / ${tagebuch_items[index]["maxscore"]}"), 
+        ), 
+      ), 
+      ); 
+      }, 
+      ); 
+    }
+  }
+
+  // ---------------------- erstellt für jede Kategorie den richtigen CircleAvatar -----------------------------------------------------------
+  CircleAvatar getCircleAvatar(id) {
+    if (id == "tschlaf") {
+      return CircleAvatar(
+                          backgroundColor: Colors.blueAccent,
+                          child: Icon(Icons.nights_stay_rounded),
+      );
+    }
+        if (id == "tsport") {
+      return CircleAvatar(
+                          backgroundColor: Colors.orange,
+                          child: Icon(Icons.directions_run),
+      );
+    }
+        if (id == "ternaehrung") {
+      return CircleAvatar(
+                          backgroundColor: Colors.yellow,
+                          child: Icon(Icons.restaurant),
+      );
+    }
+        if (id == "twohlbefinden") {
+      return CircleAvatar(
+                          backgroundColor: Colors.pinkAccent,
+                          child: Icon(Icons.favorite_outline_sharp),
+      );
+    } else {    //avatar der zurückgegeben wird falls die ID zu keinem von den Tagebuchkategorie-Fragebögen passt.
+      return CircleAvatar(
+                          backgroundColor: Colors.black,
+                          child: Icon(Icons.error),
+      );
+    }
+
+  }
+

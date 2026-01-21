@@ -3,13 +3,13 @@ import 'package:flutterapp/screens/einstellungen_screen.dart';
 import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/screens/kalender_screen.dart';
 
-class NavbarLayout extends StatefulWidget {   //my Homapge zu Stateful widget konvertiert -> kann sich selbst ändern -> Wert von Selectindex kann direkt in NavbarLayout gespeichert werden
+class NavbarLayout extends StatefulWidget {
   @override
   State<NavbarLayout> createState() => _NavbarLayoutState();
 }
 
-class _NavbarLayoutState extends State<NavbarLayout> {  //_ am Anfang = Klasse ist privat (wird vom Compiler erzwungen)
-  var selectedIndex = 0;     // Property / Variable für ausgwähltes Ziel, initialisiert mit 0
+class _NavbarLayoutState extends State<NavbarLayout> {
+  var selectedIndex = 0;     // Variable für ausgwähltes Ziel, initialisiert mit 0 -> anfangs wird immer Homescreen gezeigt
 
   @override
   Widget build(BuildContext context) {  //page Widget, dem ja nach selectedIndex Wert ein anderer Bildschrim zugewiesen wird
@@ -28,7 +28,7 @@ class _NavbarLayoutState extends State<NavbarLayout> {  //_ am Anfang = Klasse i
           throw UnimplementedError('no widget for $selectedIndex');  //Fehler wenn selectedIndex weder 0 noch 1 ist
       }
 
-    return LayoutBuilder(  //Layoutbuilder ändert die Struktur des Widgets je nach verfpgbarem Platz 
+    return LayoutBuilder(  //Layoutbuilder ändert die Struktur des Widgets je nach verfügbarem Platz 
       builder: (context, constraints) {
         return Scaffold(
           body: Column(

@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent  #Pfad zum Django Projektverzeichnis (patient_app)
+BASE_DIR2 = Path(__file__).resolve().parent.parent.parent #Pfad zum Verzsichnis über dem Django Projektverzeichnis (RLSApp)
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,7 +26,12 @@ SECRET_KEY = 'django-insecure-g@(#zv-40^q2-7#e23jgni6r!l1u9&w+&^gz&8yzf**5=v0gt1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "10.0.2.2",
+    "127.0.0.1",
+    "localhost",
+]
 
 
 # Application definition
@@ -79,7 +85,7 @@ WSGI_APPLICATION = 'patient_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR2 / 'db.sqlite3',   #Datenbank wird im RLSApp Verzeichnis erstellt
     }
 }
 
@@ -126,3 +132,24 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+
+#--------- Einstellungen für User Authentifizierung ----------------------------------------------
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+}
+
+#Custom User Model
+AUTH_USER_MODEL = 'api.CustomPatientUser'

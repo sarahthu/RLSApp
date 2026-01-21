@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/screens/irlss_screen.dart';
+import 'package:flutterapp/screens/irls_screen.dart';
 import 'package:flutterapp/screens/rlsqol_screen.dart';
 
 <<<<<<< HEAD
@@ -162,15 +162,15 @@ class FragebogenScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,   //Buttons werden mittig in der Column angezeigt
           children: [
-            ElevatedButton.icon(    //Knopf zur Fragebogen Seite
+            ElevatedButton.icon(    //Knopf zum IRLS Screen
               icon: Icon(Icons.edit_note),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf FragebogenScreen, mit Zurückknopf
-                  return IRLSSScreen();
+                Navigator.push(context, MaterialPageRoute(builder: (context) {  //Weiterleiten auf IRLS Screen, mit Zurückknopf
+                  return IRLSScreen();
                 }));
 >>>>>>> e9079a118f2d8942e4efe0a0a59707c19f8a4a85
               },
-              label: const Text('IRLSS', style: TextStyle(fontSize: 25),),
+              label: const Text('Fragebogen 1 (IRLS)', style: TextStyle(fontSize: 25),),
             ),
 <<<<<<< HEAD
           const SizedBox(height: 12),
@@ -189,14 +189,14 @@ class FragebogenScreen extends StatelessWidget {
           },
 =======
             SizedBox(height: 10,),   //Abstand zwischen Knöpfen
-            ElevatedButton.icon(   //Knopf zur Tagebuch Seite
+            ElevatedButton.icon(   //Knopf zum RLSQoL Screen
               icon: Icon(Icons.edit_note),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf TagebuchScreen, mit Zurückknopf
+                Navigator.push(context, MaterialPageRoute(builder: (context) {    //Weiterleiten auf RLSQoL Screen, mit Zurückknopf
                   return RLSQOLScreen();
                 }));
               },
-              label: const Text('RLS QoL', style: TextStyle(fontSize: 25),),
+              label: const Text('Fragebogen 2 (RLS QoL)', style: TextStyle(fontSize: 25),),
             ),
           ],
 >>>>>>> e9079a118f2d8942e4efe0a0a59707c19f8a4a85

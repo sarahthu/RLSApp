@@ -13,6 +13,7 @@ class _KalenderScreenState extends State<KalenderScreen> {
   DateTime _focusedDay = DateTime.now();  //Variable focusedDay mit initialem Wert DateTime.now()
   DateTime? _selectedDay;  //Variable selectedDay. ? = kann null sein
 
+  // ------------------------------ Build Methode -------------------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,21 +25,26 @@ class _KalenderScreenState extends State<KalenderScreen> {
         firstDay: DateTime.utc(2010, 10, 16),  //Tag ab dem der Kalender anfängt
         lastDay: DateTime.utc(2030, 3, 14),  //Tag ab dem der Kalender aufhört
         focusedDay: _focusedDay,   //bestimmt welcher Monat angezeigt wird (wird auf _focusedDay gesetzt -> wenn man Kalender öffnet sieht man immer den aktuellen Monat)
+        calendarStyle: CalendarStyle(
+          todayDecoration: BoxDecoration(color:Theme.of(context).colorScheme.inversePrimary, shape: BoxShape.circle) //macht grünen Kreis um den aktuellen Tag
+        ),
+        headerStyle: HeaderStyle(formatButtonVisible: false), //macht den "2 weeks" Knopf oben rechts weg
+        locale: "de_DE", //setzt Sprache des Kalenders auf Deutsch
         onDaySelected: (selectedDay, focusedDay) {   //Wenn Benutzer einen Tag auswählt....
-          if (!isSameDay(_selectedDay, selectedDay)) {  //(wird nur dann ausgeführt wenn ein NEUER Tag ausgewählt wird, nicht wenn Benutzer den bereits ausgewählten Tag anklickt)
             setState(() {        //ruft Funktion setState auf
               _selectedDay = selectedDay;  //speichert den vom Benutzer ausgewählten Tag in Variable _selectedDay
               _focusedDay = focusedDay;    //focusedDay ist weiterhin _focusedDay
             });
+
+            String datestring = selectedDay.toIso8601String();  //Variable datestring speichert Datum des ausgewählten Tages als String
             
-            Navigator.push(    //Navigiert zum KalenderAuswahlScreen, übergibt selectedDay
+            Navigator.push(    //Navigiert zum KalenderAuswahlScreen, übergibt datestring (String Variable mit dem ausgewählten Tag)
               context, 
               MaterialPageRoute(
                 builder: (context) {
-                  return KalenderAuswahlScreen(date: selectedDay);
+                  return KalenderAuswahlScreen(date: datestring);
                 }));
             }
-        },
       ),
     );
   }

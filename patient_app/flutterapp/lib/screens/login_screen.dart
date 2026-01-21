@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/screens/navbar_layout.dart';
+import 'package:flutterapp/screens/registrierung_screen.dart';
+import 'package:flutterapp/services/jwt_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final String title = "Login Screen";
@@ -12,9 +14,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginPageState extends State<LoginScreen> {
   final usernameController = TextEditingController(); //Erstellt einen Controller um Eingaben im Username Textfeld zu speichern
   final passwordController = TextEditingController(); //Erstellt einen Controller um Eingaben im Passwort Textfeld zu speichern
+  final jwtService = JwtService(); //erstellt Jwtservice
 
   // dispose Methode (wird auf Flutter Webseite empfohlen: https://docs.flutter.dev/cookbook/forms/text-field-changes)
-  // entfernt glaube ich die Controller wenn sie nicht mehr gebraucht werden (??)
+  // entfernt Controller wenn sie nicht mehr gebraucht werden
     @override
   void dispose() {  
     usernameController.dispose();
@@ -22,6 +25,7 @@ class _LoginPageState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ----------------------- Build Methode ----------------------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,9 +59,18 @@ class _LoginPageState extends State<LoginScreen> {
             ElevatedButton.icon(    //"Login" Knopf
               icon: Icon(Icons.person),
               onPressed: () {    //Wenn der "Login" Knopf gedrückt wird wird die login Methode aufgerufen
-                login();
+                sendLoginData();
               },
               label: const Text('Login', style: TextStyle(fontSize: 25),),
+            ),
+            SizedBox(height: 20,),
+            ElevatedButton(    //Knopf zum RegistrierungsScreen
+              onPressed: () async {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return RegistrierungScreen();
+              }));
+              },
+              child: const Text('Kein Account? --> Registrieren', style: TextStyle(fontSize: 25),),
             ),
           ],
         )
@@ -65,17 +78,28 @@ class _LoginPageState extends State<LoginScreen> {
     );
   }
 
-  void login() {
+  // ---------------------------- Methode die Nutzer einloggt ----------------------------------------------------------------
+  Future<void> sendLoginData() async {
       final username = usernameController.text.trim();  //speichert Eingabe in dem Username Feld unter variable "username"
       final password = passwordController.text.trim();  //speichert Eingabe in dem Passwort Feld unter Variable "password"
 
-      //Leitet Benutzer auf das Homescreen weiter:
-      //(hier kommt dann irgendwann eine richtige Login Funktion hin wo username und Passwort tatsachlich geprüft werden)
-      //Navigator.pushReplacement verhindert dass man auf die Login Seite zurückgehen kann 
-      //(im Gegensatz zu Navigator.push was im Homescreen verwendet wird und oben rechts immer den Zurückknopf hinmacht)
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-                  return NavbarLayout();
-                }));
+      var success = await jwtService.login(username, password); //verwendet JWT Service login Methode um Benutzername und Passwort ans Backend zu senden und Nutzer einzuloggen
+
+
+      if (success) {
+          //wenn Login Info erfolgreich gesendet und eine Antwort vom Backend erhalten wurde....
+
+          //Leitet Benutzer auf das Homescreen weiter
+          //Navigator.pushReplacement verhindert dass man auf die Login Seite zurückgehen kann 
+          //(im Gegensatz zu Navigator.push was oben rechts immer den Zurückknopf hinmacht)
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                    return NavbarLayout();
+          }));
+      } else {
+          ScaffoldMessenger.of(context).showSnackBar(  //Nachricht falls Login fehlschlägt
+            SnackBar(content: Text('Login fehlgeschlagen. \nBitte gültigen Benutzernamen und Passwort eingeben.')),
+          );
+      }
   }
 
 }
