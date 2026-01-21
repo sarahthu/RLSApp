@@ -1,0 +1,114 @@
+{% extends "portal/layout.html" %}
+{% block content %}
+
+{% if error %}
+  <div style="background:#ffe3e3;padding:12px;border-radius:10px;margin-top:18px;">
+    {{ error }}
+  </div>
+{% endif %}
+
+<div style="margin-top:24px;">
+  <h2>Patienten</h2>
+
+  <form method="get" style="margin: 12px 0; display:flex; gap:8px;">
+    <input type="text" name="q" placeholder="Suche nach Name" value="{{ q }}"
+           style="padding:8px; border:1px solid #ddd; border-radius:8px; width:280px;">
+    <button type="submit" style="padding:8px 12px; border-radius:8px; border:1px solid #ddd;">
+      Suchen
+    </button>
+  </form>
+
+  {% if patients %}
+    <table style="width:100%; border-collapse: collapse; background:white; border-radius:12px; overflow:hidden;">
+      <thead>
+        <tr style="background:#f6f6f6;">
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Prioritäten</th>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">FHIR-ID</th>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Name</th>
+          <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Geburtsdatum</th>
+          <th style="text-align:right; padding:10px; border-bottom:1px solid #eee;">Score (IRLS)</th>
+          <th style="text-align:right; padding:10px; border-bottom:1px solid #eee;">Score (RLS QoL)</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for p in patients %}
+          <tr onclick="window.location='{% url 'patient_detail' p.id %}'"
+              style="cursor:pointer;"
+              onmouseover="this.style.background='#fafafa';"
+              onmouseout="this.style.background='white';">
+
+            <!-- Priorität -->
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">
+              <span style="
+                display:inline-block;
+                padding:4px 10px;
+                border-radius:999px;
+                font-weight:700;
+                font-size:13px;
+                color:white;
+                background: {{ p.priority_color|default:'#9ca3af' }};
+              ">
+                {{ p.priority_label|default:"Unbekannt" }}
+              </span>
+            </td>
+
+            <!-- FHIR-ID -->
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">{{ p.id }}</td>
+
+            <!-- Name -->
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">{{ p.name }}</td>
+
+            <!-- Geburtsdatum -->
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">{{ p.birthDate }}</td>
+
+            <!-- IRLS Score (f1) Ampel -->
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0; text-align:right;">
+              <a href="{% url 'patient_questionnaire' p.id 'f1' %}"
+                 onclick="event.stopPropagation();"
+                 style="text-decoration:none;">
+                <span style="
+                  display:inline-block;
+                  min-width:34px;
+                  text-align:center;
+                  padding:4px 12px;
+                  border-radius:999px;
+                  font-weight:700;
+                  color:white;
+                  background: {{ p.score_f1_color|default:'#9ca3af' }};
+                ">
+                  {{ p.score_f1|default:"-" }}
+                </span>
+              </a>
+            </td>
+
+            <!-- RLS QoL Score (f2) Ampel -->
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0; text-align:right;">
+              <a href="{% url 'patient_questionnaire' p.id 'f2' %}"
+                 onclick="event.stopPropagation();"
+                 style="text-decoration:none;">
+                <span style="
+                  display:inline-block;
+                  min-width:34px;
+                  text-align:center;
+                  padding:4px 12px;
+                  border-radius:999px;
+                  font-weight:700;
+                  color:white;
+                  background: {{ p.score_f2_color|default:'#9ca3af' }};
+                ">
+                  {{ p.score_f2|default:"-" }}
+                </span>
+              </a>
+            </td>
+
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="margin-top:10px; color:#666;">Keine Patienten gefunden.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

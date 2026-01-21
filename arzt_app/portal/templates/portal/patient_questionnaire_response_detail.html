@@ -1,0 +1,39 @@
+{% extends "portal/layout.html" %}
+{% block content %}
+
+<h2>{{ questionnaire_label }} – Ausfüllung</h2>
+<p style="color:#6b7280; margin-top:-8px;">Datum: {{ authored|default:"-" }}</p>
+
+{% if error %}
+  <div style="background:#ffe3e3;padding:12px;border-radius:10px;margin-top:18px;">
+    {{ error }}
+  </div>
+{% endif %}
+
+{% if answers %}
+  <div style="margin-top:12px;">
+    {% for a in answers %}
+      <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:12px;">
+        <div style="font-weight:700; margin-bottom:10px;">
+          {{ a.question }}
+        </div>
+
+        <div>
+          {% for v in a.answers %}
+            <span style="display:inline-block; padding:4px 10px; border:1px solid #cbd5e1; border-radius:999px; margin-right:6px;">
+              {{ v }}
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>Keine Antworten vorhanden.</p>
+{% endif %}
+
+<p style="margin-top:16px;">
+  <a href="{% url 'patient_questionnaire' patient_id questionnaire_id %}">← Zurück zum Verlauf</a>
+</p>
+
+{% endblock %}

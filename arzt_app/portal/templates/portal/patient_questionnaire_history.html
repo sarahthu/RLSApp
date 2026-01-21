@@ -1,0 +1,103 @@
+{% extends "portal/layout.html" %}
+{% block content %}
+
+<!-- Chart.js laden -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<h2>{{ questionnaire_label }} ({{ questionnaire_id }})</h2>
+
+{% if error %}
+  <div style="background:#ffe3e3;padding:12px;border-radius:10px;margin-top:18px;">
+    {{ error }}
+  </div>
+{% endif %}
+
+<!-- GRAFIK (OBEN) -->
+{% if chart_scores %}
+  <div style="margin:24px 0; background:white; padding:16px; border-radius:12px;">
+    <canvas id="scoreChart" height="120"></canvas>
+  </div>
+{% endif %}
+
+<!-- TABELLE -->
+{% if summaries %}
+  <table style="width:100%; border-collapse: collapse; background:white; border-radius:12px; overflow:hidden;">
+    <thead>
+      <tr style="background:#f6f6f6;">
+        <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Datum</th>
+        <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Score</th>
+        <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Interpretation</th>
+        <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in summaries %}
+        <tr>
+          <td style="padding:10px; border-bottom:1px solid #f0f0f0;">
+            {{ s.authored|default:"-" }}
+          </td>
+          <td style="padding:10px; border-bottom:1px solid #f0f0f0;">
+            {{ s.score|default:"-" }}
+          </td>
+          <td style="padding:10px; border-bottom:1px solid #f0f0f0;">
+            {{ s.interpretation|default:"-" }}
+          </td>
+          <td style="padding:10px; border-bottom:1px solid #f0f0f0;">
+            <a href="{% url 'patient_questionnaire_response_detail' patient_id questionnaire_id s.id %}"
+               style="text-decoration: underline; color: blue;">
+              Ansehen
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>Keine Einträge vorhanden.</p>
+{% endif %}
+
+<p style="margin-top:16px;">
+  <a href="{% url 'patient_detail' patient_id %}">← Zurück zum Patienten</a>
+</p>
+
+<!-- CHART -->
+{% if chart_scores %}
+<script>
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels|safe }},
+      datasets: [{
+        label: 'Score',
+        data: {{ chart_scores|safe }},
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37, 99, 235, 0.15)',
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: '#2563eb',
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Score' }
+        },
+        x: {
+          title: { display: true, text: 'Datum' }
+        }
+      }
+    }
+  });
+</script>
+{% endif %}
+
+{% endblock %}
+

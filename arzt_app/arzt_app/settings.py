@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'portal',
 ]
 
 MIDDLEWARE = [
@@ -120,3 +121,36 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+FHIR_BASE_URL = "https://i-lv-prj-01.informatik.hs-ulm.de"
+
+FHIR_AUTH_TOKEN = ""
+FHIR_TIMEOUT = 10 # Verhindert das Requests ewig hängen bleiben.
+FHIR_VERIFY_SSL = False  # SSL-Zertifikatsprüfung deaktiviert
+
+
+
+LOGIN_URL = "/"
+LOGIN_REDIRECT_URL = "/home/" #URL zu der Benutzer nach erfolgreichem Login weitergeleitet werden (Startseite/Patientenübersicht)
+
+#FHIR_BASE_URL = "https://i-lv-prj-01.informatik.hs-ulm.de/Patient"
+
+FHIR_PATIENT_IDS = [
+    "p000000009",
+    "p000000010",
+    "p000000011",
+]
+
+FHIR_QR_LINK_TEMPLATE = "https://i-lv-prj-01.informatik.hs-ulm.de/QuestionnaireResponse/?source=Patient/{id}"
+
+QUESTIONNAIRE_LABELS = {
+    "f1": "IRLS International Restless Legs Scale",
+    "f2": "RLS QoL",
+    "tsport": "Tagebuch Sport",
+    "ternaehrung": "Tagebuch Ernährung",
+    "twohlbefinden": "Tagebuch Wohlbefinden",
+    "tschlaf": "Tagebuch Schlaf",
+}
+
+
+FHIR_PRACTITIONER_ID =  "https://i-lv-prj-01.informatik.hs-ulm.de/Practitioner/678964456"
