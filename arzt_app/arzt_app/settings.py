@@ -155,3 +155,5 @@ QUESTIONNAIRE_LABELS = {
 
 
 FHIR_PRACTITIONER_ID =  "https://i-lv-prj-01.informatik.hs-ulm.de/Practitioner/678964456"
+
+AUTH_USER_MODEL = "portal.ArztUser"
