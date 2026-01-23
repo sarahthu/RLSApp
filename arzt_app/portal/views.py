@@ -5,20 +5,19 @@ from requests import RequestException
 from portal.fhir_client import fetch_patients
 from django.conf import settings
 from portal.fhir_client import fetch_questionnaires_for_patient_from_link
-from portal.fhir_client import fetch_questionnaire_answers_for_patient
-from django.conf import settings
-from portal.fhir_client import (fetch_questionnaire_response_by_id,answers_from_questionnaire_response,fetch_questionnaire_response_summaries_for_patient)
+from portal.fhir_client import (fetch_questionnaire_response_by_id,fetch_questionnaire_response_summaries_for_patient, answers_from_questionnaire_response)
 from portal.fhir_client import fetch_latest_score_for_patient
-from django.contrib.auth.decorators import login_required
 
 
 def startseite(request):
     error = None
 
+    # Login-Formular 
     if request.method == "POST":
         lanr = request.POST.get("lanr", "").strip()
         password = request.POST.get("password", "")
 
+        # Django-Authentifizierung 
         user = authenticate(request, lanr=lanr, password=password)
         if user is not None:
             login(request, user)
@@ -28,35 +27,32 @@ def startseite(request):
 
     return render(request, "portal/startseite.html", {"error": error})
 
-def _to_int_or_none(x):
-    try:
-        return int(str(x).strip())
-    except Exception:
-        return None
-
 
 @login_required
 def home(request):
     q = (request.GET.get("q") or "").strip()
     error = None
 
-    # Ampel-Funktionen 
+    # Ampel-Funktionen für Scores
     def color_irls(v):
         """
-        IRLS: 0-40, höher = schlechter
-        Grün: 0-20, Orange: 21-30, Rot: 31-40
+        IRLS-Score:
+        0–20  → grün
+        21–30 → orange
+        31–40 → rot
         """
         try:
             v = int(v)
         except Exception:
-            return "#9ca3af"  # grau
+            return "#9ca3af"  # grau (kein Wert)
 
         if v >= 31:
             return "#dc2626"  # rot
         if v >= 21:
             return "#f59e0b"  # orange
         return "#16a34a"      # grün
-
+    
+#QoL-Score: niedrig = schlecht, hoch = gut
     def color_qol(v):
         try:
             v = int(v)
@@ -76,36 +72,38 @@ def home(request):
             return ("Hohe Priorität", "#dc2626")
         if "#f59e0b" in colors:
             return ("Mittlere Priorität", "#f59e0b")
-        if "#16a34a" in colors:            
-          return ("Niedrige Priorität", "#16a34a")
+        if "#16a34a" in colors:
+            return ("Niedrige Priorität", "#16a34a")
         return ("-", "#9ca3af")
 
     try:
-        patients = fetch_patients(count=25, search=q if q else None)
+        # Arzt-ID aus Login 
+        practitioner_id = request.user.lanr
 
-        # Patient 12892 ausblenden
+        # Patienten vom FHIR-Server laden
+        patients = fetch_patients(count=25, search=q if q else None, practitioner_id=practitioner_id,)
+
+        # Bestimmten Testpatienten ausblenden
         patients = [p for p in patients if p.get("id") != "12892"]
 
-        # Scores + Farben + Priorität pro Patient
+        # Scores Farben und Priorität pro Patient berechnen
         for p in patients:
-            # f1
             try:
                 p["score_f1"] = fetch_latest_score_for_patient(p["id"], "f1")
             except Exception:
                 p["score_f1"] = "-"
 
-            # f2
             try:
                 p["score_f2"] = fetch_latest_score_for_patient(p["id"], "f2")
             except Exception:
                 p["score_f2"] = "-"
 
-            # Farben
+            # Ampelfarben
             p["score_f1_color"] = color_irls(p.get("score_f1"))
             p["score_f2_color"] = color_qol(p.get("score_f2"))
 
-            # Priorität
-            label, col = priority_from_colors(p["score_f1_color"], p["score_f2_color"])
+            # Gesamtpriorität
+            label, col = priority_from_colors(p["score_f1_color"], p["score_f2_color"],)
             p["priority_label"] = label
             p["priority_color"] = col
 
@@ -113,11 +111,7 @@ def home(request):
         patients = []
         error = f"FHIR-Fehler: {ex}"
 
-    return render(request, "portal/home.html", {
-        "patients": patients,
-        "q": q,
-        "error": error,
-    })
+    return render(request, "portal/home.html", {"patients": patients, "q": q, "error": error,})
 
 
 def logout_view(request):
@@ -132,48 +126,22 @@ def patient_detail(request, patient_id):
     patient = None
 
     try:
-        # Patientenliste erneut laden
+        # Patientenliste neu laden
         patients = fetch_patients(count=100)
 
-        # gewünschten Patienten finden
+        # Gesuchten Patienten finden
         patient = next((p for p in patients if p["id"] == patient_id), None)
         if not patient:
             raise Exception("Patient nicht gefunden")
 
-        # Fragebögen laden
+        # Fragebögen für den Patienten laden
         qr_link = settings.FHIR_QR_LINK_TEMPLATE.format(id=patient_id)
         questionnaires = fetch_questionnaires_for_patient_from_link(qr_link)
 
     except Exception as ex:
         error = f"FHIR-Fehler: {ex}"
 
-    return render(request, "portal/patient_detail.html", {
-        "patient": patient,
-        "questionnaires": questionnaires,
-        "error": error,
-    })
-
-
-@login_required
-def patient_questionnaire(request, patient_id, questionnaire_id):
-    error = None
-    answers = []
-
-    try:
-        qr_link = settings.FHIR_QR_LINK_TEMPLATE.format(id=patient_id)
-        answers = fetch_questionnaire_answers_for_patient(qr_link, questionnaire_id)
-    except Exception as ex:
-        error = f"FHIR-Fehler: {ex}"
-
-    label = getattr(settings, "QUESTIONNAIRE_LABELS", {}).get(questionnaire_id, questionnaire_id)
-
-    return render(request, "portal/patient_questionnaire.html", {
-        "patient_id": patient_id,
-        "questionnaire_id": questionnaire_id,
-        "questionnaire_label": label,
-        "answers": answers,
-        "error": error,
-    })
+    return render(request, "portal/patient_detail.html", {"patient": patient, "questionnaires": questionnaires, "error": error,})
 
 
 @login_required
@@ -183,25 +151,21 @@ def patient_questionnaire(request, patient_id, questionnaire_id):
 
     try:
         qr_link = settings.FHIR_QR_LINK_TEMPLATE.format(id=patient_id)
-        summaries = fetch_questionnaire_response_summaries_for_patient(
-            qr_link,
-            questionnaire_id
-        )
+        summaries = fetch_questionnaire_response_summaries_for_patient(qr_link, questionnaire_id,)
     except Exception as ex:
         error = f"FHIR-Fehler: {ex}"
 
-    # Labels für Anzeige
+    # Anzeigename des Questionnaires
     labels = getattr(settings, "QUESTIONNAIRE_LABELS", {})
     questionnaire_label = labels.get(questionnaire_id, questionnaire_id)
 
-    chart_labels = []   # x-Achse (Datum)
-    chart_scores = []   # y-Achse (Score)
+    chart_labels = []  # x-Achse (Datum)
+    chart_scores = []  # y-Achse (Score)
 
     for s in summaries:
         if s.get("score") is None:
             continue
 
-        # Datum aus authored 
         authored = s.get("authored", "")
         if authored:
             chart_labels.append(authored[:10])
@@ -214,8 +178,7 @@ def patient_questionnaire(request, patient_id, questionnaire_id):
         "summaries": summaries,
         "chart_labels": chart_labels,
         "chart_scores": chart_scores,
-        "error": error,
-    })
+        "error": error,})
 
 
 @login_required
@@ -241,13 +204,9 @@ def patient_questionnaire_response_detail(request, patient_id, questionnaire_id,
         "response_id": response_id,
         "authored": authored,
         "answers": answers,
-        "error": error,
-    })
+        "error": error,})
 
 
 @login_required
 def patient_sensors(request, patient_id):
-    # leer
-    return render(request, "portal/patient_sensors.html", {
-        "patient_id": patient_id,
-    })
+    return render(request, "portal/patient_sensors.html", {"patient_id": patient_id,})
