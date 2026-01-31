@@ -4,6 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
+# Serializer zum Erstellen eines neuen Benutzers. Nimmt username und passwort entgegen und erstellt ein neues User-Objekt mit verschlüsselt gespeichertem Passwort
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -19,6 +20,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+# Serializer für Erzeugung von JSON Web Tokens
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
