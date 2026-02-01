@@ -3,6 +3,10 @@ import 'package:flutterapp/screens/navbar_layout.dart';
 import 'package:flutterapp/screens/registrierung_screen.dart';
 import 'package:flutterapp/services/jwt_service.dart';
 
+// Code für das Login Screen wurde nach Vorlage von
+// https://medium.com/@rohan.surve5/building-a-simple-login-screen-in-flutter-my-comeback-to-ui-development-60ebf1cd4bdc
+// angepasst und um die login Methode erweitert
+
 class LoginScreen extends StatefulWidget {
   final String title = "Login Screen";
 

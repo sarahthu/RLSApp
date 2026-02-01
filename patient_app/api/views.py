@@ -17,6 +17,9 @@ from rest_framework.permissions import IsAuthenticated
 
 #----------- Klassen für User Authentifizierung --------------------------------------------------------------
 
+# Code für die Authentifizierungs-Views übernommen von
+# https://medium.com/@onurmaciit/mastering-jwt-authentication-in-django-rest-framework-best-practices-and-techniques-d47f906f530a
+
 User = get_user_model()
 
 class RegisterView(generics.CreateAPIView):

@@ -3,6 +3,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutterapp/dio_setup.dart';
 
+// Code für den JWT Service wurde nach Vorlage von
+// https://medium.com/@areesh-ali/building-a-secure-flutter-app-with-jwt-and-apis-e22ade2b2d5f
+// angepasst: auth_service und token_service in einer Klasse JwtService zusammengeführt
+
 class JwtService {
   final FlutterSecureStorage _storage = FlutterSecureStorage();
 
