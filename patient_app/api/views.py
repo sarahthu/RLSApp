@@ -35,7 +35,7 @@ server_url = "https://i-lv-prj-01.informatik.hs-ulm.de"
 
 
 #GET questionnaire
-@api_view(['GET'])  #Decorator. Macht aus Funktion rls_questionnaire eine API view, bei der nur GET requests möglich sind
+@api_view(['GET'])  #Decorator. Macht aus Funktion get_questionnaire eine API view, bei der nur GET requests möglich sind
 @permission_classes([IsAuthenticated]) #API kann nur verwendet werden wenn User authentifiziert ist
 def get_questionnaire(request, id):
     print(request.user.username)

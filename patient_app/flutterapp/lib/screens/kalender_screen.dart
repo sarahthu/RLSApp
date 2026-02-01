@@ -10,8 +10,8 @@ class KalenderScreen extends StatefulWidget {
 
 class _KalenderScreenState extends State<KalenderScreen> {
   final String title = "Kalender";
-  DateTime _focusedDay = DateTime.now();  //Variable focusedDay mit initialem Wert DateTime.now()
-  DateTime? _selectedDay;  //Variable selectedDay. ? = kann null sein
+  DateTime today = DateTime.now(); //speichert das aktuelle Datum und die aktuelle Uhrzeit
+  DateTime _focusedDay = DateTime.now();  //Variable focusedDay, hat als initialen Wert auch das aktuelle Datum und die aktuelle Uhrzeit
 
   // ------------------------------ Build Methode -------------------------------------------------------------------------------------------
   @override
@@ -22,8 +22,8 @@ class _KalenderScreenState extends State<KalenderScreen> {
         title: Text(title),
       ),
       body: TableCalendar(    //Kalender Widget
-        firstDay: DateTime.utc(2010, 10, 16),  //Tag ab dem der Kalender anfängt
-        lastDay: DateTime.utc(2030, 3, 14),  //Tag ab dem der Kalender aufhört
+        firstDay: DateTime(today.year - 2, today.month, today.day), //Tag ab dem der Kalender anfängt = aktueller Tag - 2 Jahre
+        lastDay: today, //Tag ab dem der Kalender aufhört = aktueller Tag
         focusedDay: _focusedDay,   //bestimmt welcher Monat angezeigt wird (wird auf _focusedDay gesetzt -> wenn man Kalender öffnet sieht man immer den aktuellen Monat)
         calendarStyle: CalendarStyle(
           todayDecoration: BoxDecoration(color:Theme.of(context).colorScheme.inversePrimary, shape: BoxShape.circle) //macht grünen Kreis um den aktuellen Tag
@@ -32,8 +32,8 @@ class _KalenderScreenState extends State<KalenderScreen> {
         locale: "de_DE", //setzt Sprache des Kalenders auf Deutsch
         onDaySelected: (selectedDay, focusedDay) {   //Wenn Benutzer einen Tag auswählt....
             setState(() {        //ruft Funktion setState auf
-              _selectedDay = selectedDay;  //speichert den vom Benutzer ausgewählten Tag in Variable _selectedDay
-              _focusedDay = focusedDay;    //focusedDay ist weiterhin _focusedDay
+              _focusedDay = focusedDay;    //der augewählte Tag wird als focusedDay gesetzt 
+                                           //-> wenn man nachdem ein Tag ausgewählt wurde zurück zum KalenderScreen geht, bekommt man den Monat angezeigt, bei dem man zuletzt den Tag ausgewählt hat
             });
 
             String datestring = selectedDay.toIso8601String();  //Variable datestring speichert Datum des ausgewählten Tages als String
